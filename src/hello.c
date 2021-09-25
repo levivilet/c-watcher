@@ -18,6 +18,13 @@
 #include <time.h>
 #include <unistd.h>
 
+/* globals */
+
+/* result of inotify_init */
+static int fd;
+
+/* end globals */
+
 /* Read all available inotify events from the file descriptor 'fd'.
           wd is the table of watch descriptors for the directories in argv.
           argc is the length of wd and argv.
@@ -68,6 +75,7 @@ static void handle_events(int fd, int *wd, int argc, char *argv[]) {
 
             for (int i = 1; i < argc; ++i) {
                 if (wd[i] == event->wd) {
+                    // printf("%d", wd)
                     printf("%s/", argv[i]);
                     break;
                 }
@@ -87,33 +95,22 @@ static void handle_events(int fd, int *wd, int argc, char *argv[]) {
     }
 }
 
-static int display_info(const char *fpath, const struct stat *sb, int tflag,
-                        struct FTW *ftwbuf) {
-    printf("display info");
-    printf("%-3s %2d ",
-           (tflag == FTW_D)     ? "d"
-           : (tflag == FTW_DNR) ? "dnr"
-           : (tflag == FTW_DP)  ? "dp"
-           : (tflag == FTW_F)   ? "f"
-           : (tflag == FTW_NS)  ? "ns"
-           : (tflag == FTW_SL)  ? "sl"
-           : (tflag == FTW_SLN) ? "sln"
-                                : "???",
-           ftwbuf->level);
+static int add_watch(const char *fpath, const struct stat *sb, int tflag,
+                     struct FTW *ftwbuf) {
+    int wd = inotify_add_watch(fd, fpath, IN_OPEN | IN_CLOSE | IN_CREATE);
+    if (wd == -1) {
+        fprintf(stderr, "Cannot watch '%s': %s\n", fpath, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
 
-    if (tflag == FTW_NS)
-        printf("-------");
-    else
-        printf("%7jd", (intmax_t)sb->st_size);
-
-    printf("   %-40s %d %s\n", fpath, ftwbuf->base, fpath + ftwbuf->base);
+    printf("add watch %s\n", fpath);
 
     return 0; /* To tell nftw() to continue */
 }
 
 int main(int argc, char *argv[]) {
     char buf;
-    int fd, i, poll_num;
+    int i, poll_num;
     int *wd;
     nfds_t nfds;
     struct pollfd fds[2];
@@ -123,84 +120,57 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    /* Create the file descriptor for accessing the inotify API. */
+    fd = inotify_init1(IN_NONBLOCK);
+    if (fd == -1) {
+        perror("inotify_init1");
+        exit(EXIT_FAILURE);
+    }
+
     int flags = 0;
 
-    if (nftw(argv[1], display_info, 20, flags) == -1) {
+    /* Walk folder recursively and setup watcher for each file */
+    if (nftw(argv[1], add_watch, 20, flags) == -1) {
         perror("nftw");
         exit(EXIT_FAILURE);
     }
 
-    // printf("Press ENTER key to terminate.\n");
+    /* Prepare for polling. */
 
-    // /* Create the file descriptor for accessing the inotify API. */
+    nfds = 2;
 
-    // fd = inotify_init1(IN_NONBLOCK);
-    // if (fd == -1) {
-    //     perror("inotify_init1");
-    //     exit(EXIT_FAILURE);
-    // }
+    fds[0].fd = STDIN_FILENO; /* Console input */
+    fds[0].events = POLLIN;
 
-    // /* Allocate memory for watch descriptors. */
+    fds[1].fd = fd; /* Inotify input */
+    fds[1].events = POLLIN;
 
-    // wd = calloc(argc, sizeof(int));
-    // if (wd == NULL) {
-    //     perror("calloc");
-    //     exit(EXIT_FAILURE);
-    // }
+    /* Wait for events and/or terminal input. */
 
-    // /* Mark directories for events
-    //             - file was opened
-    //             - file was closed */
+    printf("Listening for events.\n");
+    while (1) {
+        poll_num = poll(fds, nfds, -1);
+        if (poll_num == -1) {
+            if (errno == EINTR) continue;
+            perror("poll");
+            exit(EXIT_FAILURE);
+        }
 
-    // entry = readdir(dir);
+        if (poll_num > 0) {
+            if (fds[0].revents & POLLIN) {
+                /* Console input is available. Empty stdin and quit. */
 
-    // for (i = 1; i < argc; i++) {
-    //     dir = opendir(my_path);
-    //     fprintf(stdout, "watching %s\n", argv[1]);
-    //     wd[i] = inotify_add_watch(fd, argv[i], IN_OPEN | IN_CLOSE);
-    //     if (wd[i] == -1) {
-    //         fprintf(stderr, "Cannot watch '%s': %s\n", argv[i],
-    //                 strerror(errno));
-    //         exit(EXIT_FAILURE);
-    //     }
-    // }
+                while (read(STDIN_FILENO, &buf, 1) > 0 && buf != '\n') continue;
+                break;
+            }
 
-    // /* Prepare for polling. */
+            if (fds[1].revents & POLLIN) {
+                /* Inotify events are available. */
 
-    // nfds = 2;
-
-    // fds[0].fd = STDIN_FILENO; /* Console input */
-    // fds[0].events = POLLIN;
-
-    // fds[1].fd = fd; /* Inotify input */
-    // fds[1].events = POLLIN;
-
-    // /* Wait for events and/or terminal input. */
-
-    // printf("Listening for events.\n");
-    // while (1) {
-    //     poll_num = poll(fds, nfds, -1);
-    //     if (poll_num == -1) {
-    //         if (errno == EINTR) continue;
-    //         perror("poll");
-    //         exit(EXIT_FAILURE);
-    //     }
-
-    //     if (poll_num > 0) {
-    //         if (fds[0].revents & POLLIN) {
-    //             /* Console input is available. Empty stdin and quit. */
-
-    //             while (read(STDIN_FILENO, &buf, 1) > 0 && buf != '\n')
-    //             continue; break;
-    //         }
-
-    //         if (fds[1].revents & POLLIN) {
-    //             /* Inotify events are available. */
-
-    //             handle_events(fd, wd, argc, argv);
-    //         }
-    //     }
-    // }
+                handle_events(fd, wd, argc, argv);
+            }
+        }
+    }
 
     // printf("Listening for events stopped.\n");
 
