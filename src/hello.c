@@ -1,21 +1,11 @@
 #define _XOPEN_SOURCE 500
-#include <dirent.h>
 #include <errno.h>
 #include <ftw.h>
 #include <poll.h>
-#include <regex.h>
-#include <setjmp.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <sys/inotify.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
 
 /* globals */
