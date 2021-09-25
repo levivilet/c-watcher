@@ -67,37 +67,43 @@ static void handle_events(int fd, int *wd, int argc, char *argv[]) {
 
             /* Print event type. */
 
+            printf("event: ");
+
             if (event->mask & IN_OPEN) printf("IN_OPEN: ");
             if (event->mask & IN_CLOSE_NOWRITE) printf("IN_CLOSE_NOWRITE: ");
             if (event->mask & IN_CLOSE_WRITE) printf("IN_CLOSE_WRITE: ");
-
-            /* Print the name of the watched directory. */
-
-            for (int i = 1; i < argc; ++i) {
-                if (wd[i] == event->wd) {
-                    // printf("%d", wd)
-                    printf("%s/", argv[i]);
-                    break;
-                }
-            }
+            if (event->mask & IN_ACCESS) printf("IN_ACCESS");
+            if (event->mask & IN_MODIFY) printf("IN_MODIFY");
+            if (event->mask & IN_ATTRIB) printf("IN_ATTRIB");
+            if (event->mask & IN_OPEN) printf("IN_OPEN");
+            if (event->mask & IN_CREATE) printf("IN_CREATE");
+            if (event->mask & IN_DELETE) printf("IN_DELETE");
+            if (event->mask & IN_DELETE_SELF) printf("IN_DELETE_SELF");
+            if (event->mask & IN_ISDIR) printf("IN_ISDIR");
+            // if (event->mask & IN_ISDIR) printf("IN_ISDIR");
+            // if (event->mask & MOVED_FROM) printf("MOVED_FROM");
+            // if (event->mask & MOVED_TO) printf("MOVED_TO");
 
             /* Print the name of the file. */
 
-            if (event->len) printf("%s", event->name);
+            if (event->len) printf(" %s", event->name);
 
             /* Print type of filesystem object. */
+            printf("\n");
 
-            if (event->mask & IN_ISDIR)
-                printf(" [directory]\n");
-            else
-                printf(" [file]\n");
+            // if (event->mask & IN_ISDIR)
+            //     printf(" [directory]\n");
+            // else
+            //     printf("[file]\n");
         }
     }
 }
 
 static int add_watch(const char *fpath, const struct stat *sb, int tflag,
                      struct FTW *ftwbuf) {
-    int wd = inotify_add_watch(fd, fpath, IN_OPEN | IN_CLOSE | IN_CREATE);
+    int wd = inotify_add_watch(fd, fpath,
+                               IN_CLOSE_WRITE | IN_MOVE | IN_CREATE |
+                                   IN_DELETE | IN_MOVE | IN_UNMOUNT);
     if (wd == -1) {
         fprintf(stderr, "Cannot watch '%s': %s\n", fpath, strerror(errno));
         exit(EXIT_FAILURE);
@@ -178,6 +184,5 @@ int main(int argc, char *argv[]) {
 
     // close(fd);
 
-    // free(wd);
-    // exit(EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
 }
