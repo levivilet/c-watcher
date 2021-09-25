@@ -21,7 +21,7 @@ static int fd;
           argv is the list of watched directories.
           Entry 0 of wd and argv is unused. */
 
-static void handle_events(int fd, int *wd, int argc, char *argv[]) {
+static void handle_events(int fd) {
     /* Some systems cannot read integer variables if they are not
                 properly aligned. On other systems, incorrect alignment may
                 decrease performance. Hence, the buffer used for reading from
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
             if (fds[1].revents & POLLIN) {
                 /* Inotify events are available. */
 
-                handle_events(fd, wd, argc, argv);
+                handle_events(fd);
             }
         }
     }
