@@ -168,11 +168,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // printf("Listening for events stopped.\n");
+    printf("Listening for events stopped.\n");
 
-    // /* Close inotify file descriptor. */
+    /* Close inotify file descriptor. */
 
-    // close(fd);
+    close(fd);
 
     exit(EXIT_SUCCESS);
 }
