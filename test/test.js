@@ -3,7 +3,6 @@ import { mkdir, mkdtemp, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import waitForExpect from "wait-for-expect";
-import { setTimeout } from "timers/promises";
 
 waitForExpect.defaults.timeout = 100;
 
