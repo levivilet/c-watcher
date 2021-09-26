@@ -4,13 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch src/hello.c --exec \"gcc -O2 src/hello.c -o hello && ./hello ./playground\"",
+    "dev": "nodemon --watch src/hello.c --exec \"gcc src/hello.c -o hello && ./hello ./playground\"",
     "nftw": "nodemon --watch src/nftw.c --exec \"gcc src/nftw.c && ./a.out ./playground\"",
     "watch": "nodemon --watch src/watch.c --exec \"gcc src/watch.c && ./a.out ./playground\""
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "nodemon": "^2.0.13"
   }

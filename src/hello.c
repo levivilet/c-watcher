@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int flags = 0;
+    int flags = FTW_PHYS;
 
     /* Walk folder recursively and setup watcher for each file */
     if (nftw(argv[1], add_watch, 20, flags) == -1) {
