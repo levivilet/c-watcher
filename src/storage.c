@@ -39,7 +39,7 @@ void storage_add(int wd, const char *fpath) {
     // storage_print();
     ListNode *next = (ListNode *)calloc(1, sizeof(ListNode));
     next->wd = wd;
-    next->filename = fpath;
+    next->filename = strdup(fpath);
     current->next = next;
     current = next;
 }

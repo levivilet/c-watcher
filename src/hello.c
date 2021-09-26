@@ -10,34 +10,24 @@
 
 #include "storage.h"
 
-// typedef struct watch {
-//     const char *filename;
-//     int wd;
-// } watch;
-
 /* globals */
 
 /* result of inotify_init */
-static int fd;
-
-/* structure for mapping wd to directory path */
-
+static int fd = -1;
 /* end globals */
 
 static void output_event(const struct inotify_event *event) {
-    fprintf(stdout, "event: ");
-
     /* Print the name of the file. */
     ListNode *node = storage_find(event->wd);
     if (node == NULL) {
         fprintf(stderr, "node is NULL, extremely unlucky user");
         exit(EXIT_FAILURE);
     }
-    fprintf(stdout, " %s/", node->filename);
+    fprintf(stdout, "%s/", node->filename);
 
-    if (event->len) fprintf(stdout, "%s", event->name);
+    if (event->len) fprintf(stdout, "%s ", event->name);
 
-    if (event->mask & IN_OPEN) fprintf(stdout, "IN_OPEN: ");
+    if (event->mask & IN_OPEN) fprintf(stdout, "IN_OPEN");
     if (event->mask & IN_CLOSE_NOWRITE) fprintf(stdout, "IN_CLOSE_NOWRITE");
     if (event->mask & IN_CLOSE_WRITE) fprintf(stdout, "IN_CLOSE_WRITE");
     if (event->mask & IN_ACCESS) fprintf(stdout, "IN_ACCESS");
@@ -95,18 +85,13 @@ static void handle_events(int fd) {
         for (char *ptr = buf; ptr < buf + len;
              ptr += sizeof(struct inotify_event) + event->len) {
             event = (const struct inotify_event *)ptr;
-
-            /* Print event type. */
-            // event.
-
             output_event(event);
-            // fprintf(stdout, "finish");
         }
     }
 }
 
-static int add_watch(const char *fpath, const struct stat *sb, int tflag,
-                     struct FTW *ftwbuf) {
+static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
+                        struct FTW *ftwbuf) {
     if (tflag == FTW_D) {
         int wd = inotify_add_watch(fd, fpath,
                                    IN_CLOSE_WRITE | IN_MOVE | IN_CREATE |
@@ -118,11 +103,6 @@ static int add_watch(const char *fpath, const struct stat *sb, int tflag,
 
         // TODO use dynamic array (or better tree)
         storage_add(wd, fpath);
-
-        printf("add watch %d %s\n", wd, fpath);
-
-        // printf("ftwbuf %d\n", ftwbuf->base);
-        // printf("filename %s\n", filename);
     }
 
     return 0; /* To tell nftw() to continue */
@@ -131,7 +111,7 @@ static int add_watch(const char *fpath, const struct stat *sb, int tflag,
 /* Walk folder recursively and setup watcher for each file */
 void watch_recursively(const char *dir) {
     int flags = FTW_PHYS;
-    if (nftw(dir, add_watch, 20, flags) == -1) {
+    if (nftw(dir, visit_dirent, 20, flags) == -1) {
         perror("nftw");
         exit(EXIT_FAILURE);
     }
@@ -140,7 +120,6 @@ void watch_recursively(const char *dir) {
 int main(int argc, char *argv[]) {
     char buf;
     int poll_num;
-    // int *wd;
     nfds_t nfds;
     struct pollfd fds[2];
 
@@ -162,7 +141,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(stderr, "Watches established.\n");
 
-    storage_print();
+    // storage_print();
 
     /* Prepare for polling. */
 
