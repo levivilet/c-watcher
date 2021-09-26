@@ -1,5 +1,5 @@
 typedef struct ListNode {
-    const char *filename;
+    const char *fpath;
     int wd;
     struct ListNode *next;
 } ListNode;

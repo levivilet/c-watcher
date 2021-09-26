@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 typedef struct ListNode {
-    const char *filename;
+    const char *fpath;
     int wd;
     struct ListNode *next;
 } ListNode;
@@ -29,7 +29,7 @@ static ListNode *current = &EMPTY_NODE;
 void storage_print() {
     ListNode *current = head;
     while (current != NULL) {
-        printf("node: %d %s\n", current->wd, current->filename);
+        printf("node: %d %s\n", current->wd, current->fpath);
         current = current->next;
     }
 }
@@ -39,7 +39,7 @@ void storage_add(int wd, const char *fpath) {
     // storage_print();
     ListNode *next = (ListNode *)calloc(1, sizeof(ListNode));
     next->wd = wd;
-    next->filename = strdup(fpath);
+    next->fpath = strdup(fpath);
     current->next = next;
     current = next;
 }
@@ -52,5 +52,6 @@ ListNode *storage_find(int wd) {
             return node;
         }
     }
-    return NULL;
+    fprintf(stderr, "node is NULL, extremely unlucky user");
+    exit(EXIT_FAILURE);
 }

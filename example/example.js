@@ -1,11 +1,14 @@
 import { spawn } from "child_process";
-import { mkdtemp, writeFile } from "fs/promises";
+import { mkdir, mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
+import { setTimeout } from "timers/promises";
 
 const getTmpDir = () => {
   return mkdtemp(join(tmpdir(), "foo-"));
 };
+
+const shortTimeout = () => setTimeout(0);
 
 /**
  *
@@ -15,37 +18,29 @@ const getTmpDir = () => {
  */
 const createWatcher = (args = [], options = {}) => {
   const child = spawn("./hello", args, options);
-  return child;
+  let result = "";
+  child.stdout.on("data", (data) => {
+    result += data.toString();
+  });
+  return {
+    get stdout() {
+      return result;
+    },
+    dispose() {
+      child.kill();
+    },
+  };
 };
 
 const main = async () => {
   const tmpDir = await getTmpDir();
-  const watcher = createWatcher([tmpDir], {
-    // stdio: ["ignore", "inherit", "ignore"],
-  });
-
-  watcher.stdout.on("data", (data) => {
-    console.log("got data", data.toString());
-  });
-
-  let result = "";
-  // watcher.stderr.on("data", (data) => {
-  //   console.log("got data 2");
-  // });
-  // watcher.stdout.on("data", (data) => {
-  //   console.log("got stdout data");
-  //   result += data.toString();
-  // });
-  await writeFile(`${tmpDir}/abc.txt`, "");
-  // await new Promise((r) =>
-  //   setTimeout(() => {
-  //     r();
-  //   }, 1000)
-  // );
-  // await waitForExpect(() => {
-  //   expect(result).toBe(`ab`);
-  // });
-  // watcher.kill();
+  const watcher = createWatcher([tmpDir]);
+  await mkdir(`${tmpDir}/a`);
+  await shortTimeout();
+  console.log(watcher.stdout);
+  //   expect(watcher.stdout).toBe(`${tmpDir}/a IN_CREATEIN_ISDIR
+  // `);
+  watcher.dispose();
 };
 
 main();

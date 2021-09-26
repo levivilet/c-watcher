@@ -1,4 +1,6 @@
-#define _XOPEN_SOURCE 500
+// #define _XOPEN_SOURCE 500
+#define _GNU_SOURCE
+
 #include <errno.h>
 #include <ftw.h>
 #include <poll.h>
@@ -19,11 +21,8 @@ static int fd = -1;
 static void output_event(const struct inotify_event *event) {
     /* Print the name of the file. */
     ListNode *node = storage_find(event->wd);
-    if (node == NULL) {
-        fprintf(stderr, "node is NULL, extremely unlucky user");
-        exit(EXIT_FAILURE);
-    }
-    fprintf(stdout, "%s/", node->filename);
+
+    fprintf(stdout, "%s/", node->fpath);
 
     if (event->len) fprintf(stdout, "%s ", event->name);
 
@@ -44,6 +43,33 @@ static void output_event(const struct inotify_event *event) {
     fprintf(stdout, "\n");
     // TODO more efficient buffer handling
     fflush(stdout);
+}
+
+static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
+                        struct FTW *ftwbuf) {
+    if (tflag == FTW_D) {
+        int wd = inotify_add_watch(fd, fpath,
+                                   IN_CLOSE_WRITE | IN_MOVE | IN_CREATE |
+                                       IN_DELETE | IN_MOVE | IN_UNMOUNT);
+        if (wd == -1) {
+            fprintf(stderr, "Cannot watch '%s': %s\n", fpath, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
+        // TODO use dynamic array (or better tree)
+        storage_add(wd, fpath);
+    }
+
+    return 0; /* To tell nftw() to continue */
+}
+
+/* Walk folder recursively and setup watcher for each file */
+static void watch_recursively(const char *dir) {
+    int flags = FTW_PHYS;
+    if (nftw(dir, visit_dirent, 20, flags) == -1) {
+        perror("nftw");
+        exit(EXIT_FAILURE);
+    }
 }
 
 /* Read all available inotify events from the file descriptor 'fd'.
@@ -86,34 +112,18 @@ static void handle_events(int fd) {
              ptr += sizeof(struct inotify_event) + event->len) {
             event = (const struct inotify_event *)ptr;
             output_event(event);
+            if (event->mask & IN_CREATE && event->mask & IN_ISDIR) {
+                ListNode *node = storage_find(event->wd);
+                char *full_path;
+                asprintf(&full_path, "%s/%s", node->fpath, event->name);
+                // printf("FULLPATH%s\n", path);
+                // const char* new_file = asprintf
+                // printf("NEW_DIR in %s\n", node->fpath);
+                // printf("NAME: %s\n", event->name);
+                watch_recursively(full_path);
+                free(full_path);
+            }
         }
-    }
-}
-
-static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
-                        struct FTW *ftwbuf) {
-    if (tflag == FTW_D) {
-        int wd = inotify_add_watch(fd, fpath,
-                                   IN_CLOSE_WRITE | IN_MOVE | IN_CREATE |
-                                       IN_DELETE | IN_MOVE | IN_UNMOUNT);
-        if (wd == -1) {
-            fprintf(stderr, "Cannot watch '%s': %s\n", fpath, strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-
-        // TODO use dynamic array (or better tree)
-        storage_add(wd, fpath);
-    }
-
-    return 0; /* To tell nftw() to continue */
-}
-
-/* Walk folder recursively and setup watcher for each file */
-void watch_recursively(const char *dir) {
-    int flags = FTW_PHYS;
-    if (nftw(dir, visit_dirent, 20, flags) == -1) {
-        perror("nftw");
-        exit(EXIT_FAILURE);
     }
 }
 
