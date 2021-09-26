@@ -91,15 +91,17 @@ static void handle_events(int fd) {
 
 static int add_watch(const char *fpath, const struct stat *sb, int tflag,
                      struct FTW *ftwbuf) {
-    int wd = inotify_add_watch(fd, fpath,
-                               IN_CLOSE_WRITE | IN_MOVE | IN_CREATE |
-                                   IN_DELETE | IN_MOVE | IN_UNMOUNT);
-    if (wd == -1) {
-        fprintf(stderr, "Cannot watch '%s': %s\n", fpath, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+    if (tflag == FTW_D) {
+        int wd = inotify_add_watch(fd, fpath,
+                                   IN_CLOSE_WRITE | IN_MOVE | IN_CREATE |
+                                       IN_DELETE | IN_MOVE | IN_UNMOUNT);
+        if (wd == -1) {
+            fprintf(stderr, "Cannot watch '%s': %s\n", fpath, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
 
-    printf("add watch %s\n", fpath);
+        printf("add watch %s\n", fpath);
+    }
 
     return 0; /* To tell nftw() to continue */
 }
@@ -123,6 +125,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // TODO still too many watchers
     int flags = FTW_PHYS;
 
     /* Walk folder recursively and setup watcher for each file */
