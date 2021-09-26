@@ -136,3 +136,31 @@ ${tmpDir}/a/b IN_CREATEIN_ISDIR
   });
   watcher.dispose();
 });
+
+test("remove folder", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/a`);
+  const watcher = createWatcher([tmpDir]);
+  await rm(`${tmpDir}/a`, { recursive: true });
+  // TODO why is there a second line?
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a IN_DELETEIN_ISDIR
+${tmpDir}/a/
+`);
+  });
+  watcher.dispose();
+});
+
+test("remove folder - nested", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/a`);
+  await mkdir(`${tmpDir}/a/b`);
+  const watcher = createWatcher([tmpDir]);
+  await rm(`${tmpDir}/a/b`, { recursive: true });
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a/b IN_DELETEIN_ISDIR
+${tmpDir}/a/b/
+`);
+  });
+  watcher.dispose();
+});
