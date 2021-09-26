@@ -8,21 +8,34 @@
 #include <sys/inotify.h>
 #include <unistd.h>
 
-typedef struct watch {
-    const char *filename;
-    int wd;
-} watch;
+#include "storage.h"
+
+// typedef struct watch {
+//     const char *filename;
+//     int wd;
+// } watch;
 
 /* globals */
 
 /* result of inotify_init */
 static int fd;
-static watch watches[500];
+
+/* structure for mapping wd to directory path */
 
 /* end globals */
 
 static void output_event(const struct inotify_event *event) {
     fprintf(stdout, "event: ");
+
+    /* Print the name of the file. */
+    ListNode *node = storage_find(event->wd);
+    if (node == NULL) {
+        fprintf(stderr, "node is NULL, extremely unlucky user");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(stdout, " %s/", node->filename);
+
+    if (event->len) fprintf(stdout, "%s", event->name);
 
     if (event->mask & IN_OPEN) fprintf(stdout, "IN_OPEN: ");
     if (event->mask & IN_CLOSE_NOWRITE) fprintf(stdout, "IN_CLOSE_NOWRITE");
@@ -38,13 +51,6 @@ static void output_event(const struct inotify_event *event) {
     // if (event->mask & IN_ISDIR) printf("IN_ISDIR");
     // if (event->mask & MOVED_FROM) printf("MOVED_FROM");
     // if (event->mask & MOVED_TO) printf("MOVED_TO");
-
-    /* Print the name of the file. */
-    fprintf(stdout, " %s/", watches[event->wd].filename);
-
-    if (event->len) fprintf(stdout, "%s", event->name);
-
-    /* Print type of filesystem object. */
     fprintf(stdout, "\n");
     // TODO more efficient buffer handling
     fflush(stdout);
@@ -110,11 +116,13 @@ static int add_watch(const char *fpath, const struct stat *sb, int tflag,
             exit(EXIT_FAILURE);
         }
 
-        watch w = {fpath, wd};
-
-        watches[w.wd] = w;
+        // TODO use dynamic array (or better tree)
+        storage_add(wd, fpath);
 
         printf("add watch %d %s\n", wd, fpath);
+
+        // printf("ftwbuf %d\n", ftwbuf->base);
+        // printf("filename %s\n", filename);
     }
 
     return 0; /* To tell nftw() to continue */
@@ -131,8 +139,8 @@ void watch_recursively(const char *dir) {
 
 int main(int argc, char *argv[]) {
     char buf;
-    int i, poll_num;
-    int *wd;
+    int poll_num;
+    // int *wd;
     nfds_t nfds;
     struct pollfd fds[2];
 
@@ -153,6 +161,8 @@ int main(int argc, char *argv[]) {
     watch_recursively(argv[1]);
 
     fprintf(stderr, "Watches established.\n");
+
+    storage_print();
 
     /* Prepare for polling. */
 
