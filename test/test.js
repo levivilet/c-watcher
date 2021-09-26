@@ -164,3 +164,77 @@ ${tmpDir}/a/b/
   });
   watcher.dispose();
 });
+
+test("misc - add and remove file", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/abc.txt`, "");
+  await rm(`${tmpDir}/abc.txt`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt IN_CREATE
+${tmpDir}/abc.txt IN_CLOSE_WRITE
+${tmpDir}/abc.txt IN_DELETE
+`);
+  });
+  watcher.dispose();
+});
+
+test("misc - file with spaces", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a b c.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a b c.txt IN_CREATE
+${tmpDir}/a b c.txt IN_CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("misc - file with comma", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a,b,c.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a,b,c.txt IN_CREATE
+${tmpDir}/a,b,c.txt IN_CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("misc - file with newline", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a\nb\nc.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a\nb\nc.txt IN_CREATE
+${tmpDir}/a\nb\nc.txt IN_CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("misc - file with quotes", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a"b"c.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a"b"c.txt IN_CREATE
+${tmpDir}/a"b"c.txt IN_CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("misc - file with dot at start", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/.abc.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/.abc.txt IN_CREATE
+${tmpDir}/.abc.txt IN_CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
