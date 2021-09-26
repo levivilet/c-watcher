@@ -4,7 +4,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import waitForExpect from "wait-for-expect";
 
-waitForExpect.defaults.timeout = 200;
+waitForExpect.defaults.timeout = 300;
 
 const getTmpDir = () => {
   return mkdtemp(join(tmpdir(), "foo-"));
