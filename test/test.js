@@ -42,9 +42,11 @@ test("create file", async () => {
   const tmpDir = await getTmpDir();
   const watcher = createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/abc.txt`, "");
-  expect(watcher.stdout).toBe(`${tmpDir}/abc.txt IN_CREATE
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt IN_CREATE
 ${tmpDir}/abc.txt IN_CLOSE_WRITE
 `);
+  });
   watcher.dispose();
 });
 
