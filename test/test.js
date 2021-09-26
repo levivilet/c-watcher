@@ -63,6 +63,31 @@ ${tmpDir}/a/abc.txt IN_CLOSE_WRITE
   watcher.dispose();
 });
 
+test("modify file", async () => {
+  const tmpDir = await getTmpDir();
+  await writeFile(`${tmpDir}/abc.txt`, "");
+  const watcher = createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/abc.txt`, "abc");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt IN_CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("modify file - nested", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/a`);
+  await writeFile(`${tmpDir}/a/abc.txt`, "");
+  const watcher = createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a/abc.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt IN_CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
 test("remove file", async () => {
   const tmpDir = await getTmpDir();
   await writeFile(`${tmpDir}/abc.txt`, "");
