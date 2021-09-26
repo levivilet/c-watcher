@@ -80,11 +80,6 @@ static void handle_events(int fd) {
 
             /* Print type of filesystem object. */
             printf("\n");
-
-            // if (event->mask & IN_ISDIR)
-            //     printf(" [directory]\n");
-            // else
-            //     printf("[file]\n");
         }
     }
 }
@@ -106,6 +101,15 @@ static int add_watch(const char *fpath, const struct stat *sb, int tflag,
     return 0; /* To tell nftw() to continue */
 }
 
+/* Walk folder recursively and setup watcher for each file */
+void watch_recursively(const char *dir) {
+    int flags = FTW_PHYS;
+    if (nftw(dir, add_watch, 20, flags) == -1) {
+        perror("nftw");
+        exit(EXIT_FAILURE);
+    }
+}
+
 int main(int argc, char *argv[]) {
     char buf;
     int i, poll_num;
@@ -125,14 +129,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // TODO still too many watchers
-    int flags = FTW_PHYS;
-
-    /* Walk folder recursively and setup watcher for each file */
-    if (nftw(argv[1], add_watch, 20, flags) == -1) {
-        perror("nftw");
-        exit(EXIT_FAILURE);
-    }
+    watch_recursively(argv[1]);
 
     /* Prepare for polling. */
 
