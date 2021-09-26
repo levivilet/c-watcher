@@ -8,12 +8,47 @@
 #include <sys/inotify.h>
 #include <unistd.h>
 
+typedef struct watch {
+    const char *filename;
+    int wd;
+} watch;
+
 /* globals */
 
 /* result of inotify_init */
 static int fd;
+static watch watches[500];
 
 /* end globals */
+
+static void output_event(const struct inotify_event *event) {
+    fprintf(stdout, "event: ");
+
+    if (event->mask & IN_OPEN) fprintf(stdout, "IN_OPEN: ");
+    if (event->mask & IN_CLOSE_NOWRITE) fprintf(stdout, "IN_CLOSE_NOWRITE");
+    if (event->mask & IN_CLOSE_WRITE) fprintf(stdout, "IN_CLOSE_WRITE");
+    if (event->mask & IN_ACCESS) fprintf(stdout, "IN_ACCESS");
+    if (event->mask & IN_MODIFY) fprintf(stdout, "IN_MODIFY");
+    if (event->mask & IN_ATTRIB) fprintf(stdout, "IN_ATTRIB");
+    if (event->mask & IN_OPEN) fprintf(stdout, "IN_OPEN");
+    if (event->mask & IN_CREATE) fprintf(stdout, "IN_CREATE");
+    if (event->mask & IN_DELETE) fprintf(stdout, "IN_DELETE");
+    if (event->mask & IN_DELETE_SELF) fprintf(stdout, "IN_DELETE_SELF");
+    if (event->mask & IN_ISDIR) fprintf(stdout, "IN_ISDIR");
+    // if (event->mask & IN_ISDIR) printf("IN_ISDIR");
+    // if (event->mask & MOVED_FROM) printf("MOVED_FROM");
+    // if (event->mask & MOVED_TO) printf("MOVED_TO");
+
+    /* Print the name of the file. */
+    fprintf(stdout, " %s/", watches[event->wd].filename);
+
+    if (event->len) fprintf(stdout, "%s", event->name);
+
+    /* Print type of filesystem object. */
+    fprintf(stdout, "\n");
+    // TODO more efficient buffer handling
+    fflush(stdout);
+}
 
 /* Read all available inotify events from the file descriptor 'fd'.
           wd is the table of watch descriptors for the directories in argv.
@@ -56,34 +91,9 @@ static void handle_events(int fd) {
             event = (const struct inotify_event *)ptr;
 
             /* Print event type. */
+            // event.
 
-            fprintf(stdout, "event: ");
-
-            if (event->mask & IN_OPEN) fprintf(stdout, "IN_OPEN: ");
-            if (event->mask & IN_CLOSE_NOWRITE)
-                fprintf(stdout, "IN_CLOSE_NOWRITE: ");
-            if (event->mask & IN_CLOSE_WRITE)
-                fprintf(stdout, "IN_CLOSE_WRITE: ");
-            if (event->mask & IN_ACCESS) fprintf(stdout, "IN_ACCESS");
-            if (event->mask & IN_MODIFY) fprintf(stdout, "IN_MODIFY");
-            if (event->mask & IN_ATTRIB) fprintf(stdout, "IN_ATTRIB");
-            if (event->mask & IN_OPEN) fprintf(stdout, "IN_OPEN");
-            if (event->mask & IN_CREATE) fprintf(stdout, "IN_CREATE");
-            if (event->mask & IN_DELETE) fprintf(stdout, "IN_DELETE");
-            if (event->mask & IN_DELETE_SELF) fprintf(stdout, "IN_DELETE_SELF");
-            if (event->mask & IN_ISDIR) fprintf(stdout, "IN_ISDIR");
-            // if (event->mask & IN_ISDIR) printf("IN_ISDIR");
-            // if (event->mask & MOVED_FROM) printf("MOVED_FROM");
-            // if (event->mask & MOVED_TO) printf("MOVED_TO");
-
-            /* Print the name of the file. */
-
-            if (event->len) fprintf(stdout, " %s", event->name);
-
-            /* Print type of filesystem object. */
-            fprintf(stdout, "\n");
-            // TODO more efficient buffer handling
-            fflush(stdout);
+            output_event(event);
             // fprintf(stdout, "finish");
         }
     }
@@ -100,7 +110,11 @@ static int add_watch(const char *fpath, const struct stat *sb, int tflag,
             exit(EXIT_FAILURE);
         }
 
-        printf("add watch %s\n", fpath);
+        watch w = {fpath, wd};
+
+        watches[w.wd] = w;
+
+        printf("add watch %d %s\n", wd, fpath);
     }
 
     return 0; /* To tell nftw() to continue */
@@ -134,7 +148,11 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    fprintf(stderr, "Setting up watches. This may take a while!\n");
+
     watch_recursively(argv[1]);
+
+    fprintf(stderr, "Watches established.\n");
 
     /* Prepare for polling. */
 
@@ -148,7 +166,7 @@ int main(int argc, char *argv[]) {
 
     /* Wait for events and/or terminal input. */
 
-    printf("Listening for events.\n");
+    // printf("Listening for events.\n");
     while (1) {
         poll_num = poll(fds, nfds, -1);
         if (poll_num == -1) {

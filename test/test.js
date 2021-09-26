@@ -1,8 +1,10 @@
 import { spawn } from "child_process";
-import { mkdtemp, rm, writeFile } from "fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import waitForExpect from "wait-for-expect";
+
+waitForExpect.defaults.timeout = 100;
 
 const getTmpDir = () => {
   return mkdtemp(join(tmpdir(), "foo-"));
@@ -41,9 +43,23 @@ test("create file", async () => {
   await writeFile(`${tmpDir}/abc.txt`, "");
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`add watch ${tmpDir}
-Listening for events.
 event: IN_CREATE abc.txt
-event: IN_CLOSE_WRITE:  abc.txt
+event: IN_CLOSE_WRITE abc.txt
+`);
+  });
+  watcher.dispose();
+});
+
+test("create file - nested", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/a`);
+  const watcher = createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a/abc.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`add watch ${tmpDir}
+add watch ${tmpDir}/a
+event: IN_CREATE a/abc.txt
+event: IN_CLOSE_WRITE a/abc.txt
 `);
   });
   watcher.dispose();
@@ -56,7 +72,6 @@ test("remove file", async () => {
   await rm(`${tmpDir}/abc.txt`);
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`add watch ${tmpDir}
-Listening for events.
 event: IN_DELETE abc.txt
 `);
   });

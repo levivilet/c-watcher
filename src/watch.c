@@ -110,8 +110,8 @@ int main(int argc, char *argv[]) {
        - file was closed */
 
     for (i = 1; i < argc; i++) {
-        int wd = inotify_add_watch(fd, argv[i], IN_OPEN | IN_CLOSE);
-        if (wd == -1) {
+        wd[i] = inotify_add_watch(fd, argv[i], IN_OPEN | IN_CLOSE);
+        if (wd[i] == -1) {
             fprintf(stderr, "Cannot watch '%s': %s\n", argv[i],
                     strerror(errno));
             exit(EXIT_FAILURE);
