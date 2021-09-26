@@ -57,29 +57,34 @@ static void handle_events(int fd) {
 
             /* Print event type. */
 
-            printf("event: ");
+            fprintf(stdout, "event: ");
 
-            if (event->mask & IN_OPEN) printf("IN_OPEN: ");
-            if (event->mask & IN_CLOSE_NOWRITE) printf("IN_CLOSE_NOWRITE: ");
-            if (event->mask & IN_CLOSE_WRITE) printf("IN_CLOSE_WRITE: ");
-            if (event->mask & IN_ACCESS) printf("IN_ACCESS");
-            if (event->mask & IN_MODIFY) printf("IN_MODIFY");
-            if (event->mask & IN_ATTRIB) printf("IN_ATTRIB");
-            if (event->mask & IN_OPEN) printf("IN_OPEN");
-            if (event->mask & IN_CREATE) printf("IN_CREATE");
-            if (event->mask & IN_DELETE) printf("IN_DELETE");
-            if (event->mask & IN_DELETE_SELF) printf("IN_DELETE_SELF");
-            if (event->mask & IN_ISDIR) printf("IN_ISDIR");
+            if (event->mask & IN_OPEN) fprintf(stdout, "IN_OPEN: ");
+            if (event->mask & IN_CLOSE_NOWRITE)
+                fprintf(stdout, "IN_CLOSE_NOWRITE: ");
+            if (event->mask & IN_CLOSE_WRITE)
+                fprintf(stdout, "IN_CLOSE_WRITE: ");
+            if (event->mask & IN_ACCESS) fprintf(stdout, "IN_ACCESS");
+            if (event->mask & IN_MODIFY) fprintf(stdout, "IN_MODIFY");
+            if (event->mask & IN_ATTRIB) fprintf(stdout, "IN_ATTRIB");
+            if (event->mask & IN_OPEN) fprintf(stdout, "IN_OPEN");
+            if (event->mask & IN_CREATE) fprintf(stdout, "IN_CREATE");
+            if (event->mask & IN_DELETE) fprintf(stdout, "IN_DELETE");
+            if (event->mask & IN_DELETE_SELF) fprintf(stdout, "IN_DELETE_SELF");
+            if (event->mask & IN_ISDIR) fprintf(stdout, "IN_ISDIR");
             // if (event->mask & IN_ISDIR) printf("IN_ISDIR");
             // if (event->mask & MOVED_FROM) printf("MOVED_FROM");
             // if (event->mask & MOVED_TO) printf("MOVED_TO");
 
             /* Print the name of the file. */
 
-            if (event->len) printf(" %s", event->name);
+            if (event->len) fprintf(stdout, " %s", event->name);
 
             /* Print type of filesystem object. */
-            printf("\n");
+            fprintf(stdout, "\n");
+            // TODO more efficient buffer handling
+            fflush(stdout);
+            // fprintf(stdout, "finish");
         }
     }
 }

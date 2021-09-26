@@ -17,6 +17,7 @@
   "devDependencies": {
     "@types/jest": "^27.0.2",
     "jest": "^27.2.2",
-    "nodemon": "^2.0.13"
+    "nodemon": "^2.0.13",
+    "wait-for-expect": "^3.0.2"
   }
 }
