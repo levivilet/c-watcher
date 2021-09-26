@@ -42,8 +42,8 @@ test("create file", async () => {
   const watcher = createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt IN_CREATE
-${tmpDir}/abc.txt IN_CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt CREATE
+${tmpDir}/abc.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -55,8 +55,8 @@ test("create file - nested", async () => {
   const watcher = createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt IN_CREATE
-${tmpDir}/a/abc.txt IN_CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt CREATE
+${tmpDir}/a/abc.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -68,7 +68,7 @@ test("modify file", async () => {
   const watcher = createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/abc.txt`, "abc");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt IN_CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -81,7 +81,7 @@ test("modify file - nested", async () => {
   const watcher = createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt IN_CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -93,7 +93,7 @@ test("remove file", async () => {
   const watcher = createWatcher([tmpDir]);
   await rm(`${tmpDir}/abc.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt IN_DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt DELETE
 `);
   });
   watcher.dispose();
@@ -106,7 +106,7 @@ test("remove file - nested", async () => {
   const watcher = createWatcher([tmpDir]);
   await rm(`${tmpDir}/a/abc.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt IN_DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt DELETE
 `);
   });
   watcher.dispose();
@@ -117,7 +117,7 @@ test("create folder", async () => {
   const watcher = createWatcher([tmpDir]);
   await mkdir(`${tmpDir}/a`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a IN_CREATEIN_ISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/a CREATEISDIR
 `);
   });
   watcher.dispose();
@@ -129,8 +129,8 @@ test("create folder - nested", async () => {
   await mkdir(`${tmpDir}/a`);
   await mkdir(`${tmpDir}/a/b`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a IN_CREATEIN_ISDIR
-${tmpDir}/a/b IN_CREATEIN_ISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/a CREATEISDIR
+${tmpDir}/a/b CREATEISDIR
 `);
   });
   watcher.dispose();
@@ -143,7 +143,7 @@ test("remove folder", async () => {
   await rm(`${tmpDir}/a`, { recursive: true });
   // TODO why is there a second line?
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a IN_DELETEIN_ISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/a DELETEISDIR
 ${tmpDir}/a/
 `);
   });
@@ -157,7 +157,7 @@ test("remove folder - nested", async () => {
   const watcher = createWatcher([tmpDir]);
   await rm(`${tmpDir}/a/b`, { recursive: true });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/b IN_DELETEIN_ISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/a/b DELETEISDIR
 ${tmpDir}/a/b/
 `);
   });
@@ -170,9 +170,9 @@ test("misc - add and remove file", async () => {
   await writeFile(`${tmpDir}/abc.txt`, "");
   await rm(`${tmpDir}/abc.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt IN_CREATE
-${tmpDir}/abc.txt IN_CLOSE_WRITE
-${tmpDir}/abc.txt IN_DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt CREATE
+${tmpDir}/abc.txt CLOSE_WRITE
+${tmpDir}/abc.txt DELETE
 `);
   });
   watcher.dispose();
@@ -183,8 +183,8 @@ test("misc - file with spaces", async () => {
   const watcher = createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a b c.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a b c.txt IN_CREATE
-${tmpDir}/a b c.txt IN_CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a b c.txt CREATE
+${tmpDir}/a b c.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -195,8 +195,8 @@ test("misc - file with comma", async () => {
   const watcher = createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a,b,c.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a,b,c.txt IN_CREATE
-${tmpDir}/a,b,c.txt IN_CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a,b,c.txt CREATE
+${tmpDir}/a,b,c.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -207,8 +207,8 @@ test("misc - file with newline", async () => {
   const watcher = createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a\nb\nc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a\nb\nc.txt IN_CREATE
-${tmpDir}/a\nb\nc.txt IN_CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a\nb\nc.txt CREATE
+${tmpDir}/a\nb\nc.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -219,8 +219,8 @@ test("misc - file with quotes", async () => {
   const watcher = createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a"b"c.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a"b"c.txt IN_CREATE
-${tmpDir}/a"b"c.txt IN_CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a"b"c.txt CREATE
+${tmpDir}/a"b"c.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -231,8 +231,8 @@ test("misc - file with dot at start", async () => {
   const watcher = createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/.abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/.abc.txt IN_CREATE
-${tmpDir}/.abc.txt IN_CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/.abc.txt CREATE
+${tmpDir}/.abc.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
