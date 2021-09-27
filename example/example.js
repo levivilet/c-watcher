@@ -45,13 +45,17 @@ const createWatcher = async (args = [], options = {}) => {
 const main = async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
-  await mkdir(`${tmpDir2}/new`);
+  await mkdir(`${tmpDir}/old`);
   const watcher = await createWatcher([tmpDir]);
-  await rename(`${tmpDir2}/new`, `${tmpDir}/new`);
-  await writeFile(`${tmpDir}/new/abc.txt`, "");
-
-  setTimeout(1000);
+  await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
+  // await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
+  await setTimeout(100);
   console.log(watcher.stdout);
+  // await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
+  // await writeFile(`${tmpDir}/old/abc.txt`, "");
+
+  // setTimeout(1000);
+  // console.log(watcher.stdout);
   //   await waitForExpect(() => {
   //     expect(watcher.stdout).toBe(`${tmpDir}/new ISDIR
   // ${tmpDir}/.abc.txt CREATE

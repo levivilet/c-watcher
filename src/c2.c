@@ -44,44 +44,27 @@ static void output_event(const struct inotify_event *event) {
     if (event->mask & IN_MOVED_FROM) printf("MOVED_FROM");
     if (event->mask & IN_MOVED_TO) printf("MOVED_TO");
     if (event->mask & IN_MODIFY) printf("MODIFY");
-    if (event->mask & IN_DELETE_SELF) printf("DELETESELF");
-    if (event->mask & IN_MOVE_SELF) printf("MOVE_SELF");
-    if (event->mask & IN_ACCESS) printf("ACCESS");
-    if (event->mask & IN_IGNORED) printf("IGNORED");
 
     fprintf(stdout, "\n");
     // TODO more efficient buffer handling
     fflush(stdout);
 }
 
-static void watch_add(const char *fpath) {
-    int wd = inotify_add_watch(fd, fpath,
-                               IN_CLOSE_WRITE | IN_MOVE | IN_CREATE |
-                                   IN_DELETE | IN_MOVE | IN_UNMOUNT);
-    if (wd == -1) {
-        fprintf(stderr, "Cannot watch '%s': %s\n", fpath, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
-    // fprintf(stdout, "ADD WATCH %s\n", fpath);
-
-    // TODO use dynamic array (or better tree)
-    storage_add(wd, fpath);
-}
-
-static void watch_remove(int wd) {
-    ListNode *node = storage_find(wd);
-    int ok = inotify_rm_watch(fd, wd);
-    if (!ok) {
-        fprintf(stderr, "Cannot unwatch '%d': %s\n", wd, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-}
-
 static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
                         struct FTW *ftwbuf) {
     if (tflag == FTW_D) {
-        watch_add(fpath);
+        int wd = inotify_add_watch(fd, fpath,
+                                   IN_CLOSE_WRITE | IN_MOVE | IN_CREATE |
+                                       IN_DELETE | IN_MOVE | IN_UNMOUNT);
+        if (wd == -1) {
+            fprintf(stderr, "Cannot watch '%s': %s\n", fpath, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
+        // fprintf(stdout, "ADD WATCH %s\n", fpath);
+
+        // TODO use dynamic array (or better tree)
+        storage_add(wd, fpath);
     }
 
     return 0; /* To tell nftw() to continue */
@@ -136,22 +119,17 @@ static void handle_events(int fd) {
              ptr += sizeof(struct inotify_event) + event->len) {
             event = (const struct inotify_event *)ptr;
             output_event(event);
-            if (event->mask & IN_ISDIR) {
-                if ((event->mask & IN_CREATE || event->mask & IN_MOVED_TO)) {
-                    ListNode *node = storage_find(event->wd);
-                    char *full_path;
-                    asprintf(&full_path, "%s/%s", node->fpath, event->name);
-                    // printf("FULLPATH%s\n", path);
-                    // const char* new_file = asprintf
-                    // printf("NEW_DIR in %s\n", node->fpath);
-                    // printf("NAME: %s\n", event->name);
-                    watch_recursively(full_path);
-                    free(full_path);
-                } else if (event->mask & IN_MOVED_FROM) {
-                    // fprintf(stdout, "RMOEV WATCH\n");
-                    // TODO don't remove watch if MOVED_TO occurs inside folder
-                    watch_remove(event->wd);
-                }
+            if ((event->mask & IN_CREATE || event->mask & IN_MOVED_TO) &&
+                event->mask & IN_ISDIR) {
+                ListNode *node = storage_find(event->wd);
+                char *full_path;
+                asprintf(&full_path, "%s/%s", node->fpath, event->name);
+                // printf("FULLPATH%s\n", full_path);
+                // const char* new_file = asprintf
+                // printf("NEW_DIR in %s\n", node->fpath);
+                // printf("NAME: %s\n", event->name);
+                watch_recursively(full_path);
+                free(full_path);
             }
         }
     }
