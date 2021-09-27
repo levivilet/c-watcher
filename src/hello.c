@@ -6,17 +6,13 @@
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/inotify.h>
 #include <unistd.h>
 
+#include "notify.h"
 #include "storage.h"
 
-/* globals */
-
-/* result of inotify_init */
-static int fd = -1;
-/* end globals */
+extern int fd;
 
 static void output_event(const struct inotify_event *event) {
     /* Print the name of the file. */
@@ -54,34 +50,24 @@ static void output_event(const struct inotify_event *event) {
     fflush(stdout);
 }
 
-static void watch_add(const char *fpath) {
-    int wd = inotify_add_watch(fd, fpath,
-                               IN_CLOSE_WRITE | IN_MOVE | IN_CREATE |
-                                   IN_DELETE | IN_MOVE | IN_UNMOUNT);
-    if (wd == -1) {
-        fprintf(stderr, "Cannot watch '%s': %s\n", fpath, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
+static void add_watch(const char *fpath) {
+    int wd = notify_add_watch(fpath);
     // fprintf(stdout, "ADD WATCH %s\n", fpath);
 
     // TODO use dynamic array (or better tree)
     storage_add(wd, fpath);
 }
 
-static void watch_remove(int wd) {
+static void remove_watch(int wd) {
     ListNode *node = storage_find(wd);
-    int ok = inotify_rm_watch(fd, wd);
-    if (!ok) {
-        fprintf(stderr, "Cannot unwatch '%d': %s\n", wd, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+    notify_remove_watch(wd);
+    // TODO remove from storage
 }
 
 static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
                         struct FTW *ftwbuf) {
     if (tflag == FTW_D) {
-        watch_add(fpath);
+        add_watch(fpath);
     }
 
     return 0; /* To tell nftw() to continue */
@@ -150,7 +136,7 @@ static void handle_events(int fd) {
                 } else if (event->mask & IN_MOVED_FROM) {
                     // fprintf(stdout, "RMOEV WATCH\n");
                     // TODO don't remove watch if MOVED_TO occurs inside folder
-                    watch_remove(event->wd);
+                    remove_watch(event->wd);
                 }
             }
         }
@@ -169,11 +155,7 @@ int main(int argc, char *argv[]) {
     }
 
     /* Create the file descriptor for accessing the inotify API. */
-    fd = inotify_init1(IN_NONBLOCK);
-    if (fd == -1) {
-        perror("inotify_init1");
-        exit(EXIT_FAILURE);
-    }
+    notify_init();
 
     fprintf(stderr, "Setting up watches. This may take a while!\n");
 

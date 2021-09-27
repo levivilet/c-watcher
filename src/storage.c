@@ -1,12 +1,6 @@
-#define _XOPEN_SOURCE 500
-#include <errno.h>
-#include <ftw.h>
-#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/inotify.h>
-#include <unistd.h>
 
 typedef struct ListNode {
     const char *fpath;
