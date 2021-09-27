@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import { mkdir, mkdtemp } from "fs/promises";
+import { mkdir, mkdtemp, rename, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { setTimeout } from "timers/promises";
@@ -34,12 +34,21 @@ const createWatcher = (args = [], options = {}) => {
 
 const main = async () => {
   const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir2}/new`);
   const watcher = createWatcher([tmpDir]);
-  await mkdir(`${tmpDir}/a`);
-  await shortTimeout();
+  await rename(`${tmpDir2}/new`, `${tmpDir}/new`);
+  await writeFile(`${tmpDir}/new/abc.txt`, "");
+
+  setTimeout(1000);
   console.log(watcher.stdout);
-  //   expect(watcher.stdout).toBe(`${tmpDir}/a IN_CREATEIN_ISDIR
+  //   await waitForExpect(() => {
+  //     expect(watcher.stdout).toBe(`${tmpDir}/new ISDIR
+  // ${tmpDir}/.abc.txt CREATE
+  // ${tmpDir}/.abc.txt CLOSE_WRITE
   // `);
+  //   });
+  // watcher.dispose();
   watcher.dispose();
 };
 

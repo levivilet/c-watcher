@@ -38,8 +38,8 @@ static void output_event(const struct inotify_event *event) {
     if (event->mask & IN_DELETE_SELF) fprintf(stdout, "DELETE_SELF");
     if (event->mask & IN_ISDIR) fprintf(stdout, "ISDIR");
     // if (event->mask & IN_ISDIR) printf("IN_ISDIR");
-    // if (event->mask & MOVED_FROM) printf("MOVED_FROM");
-    // if (event->mask & MOVED_TO) printf("MOVED_TO");
+    if (event->mask & IN_MOVED_FROM) printf("MOVED_FROM");
+    if (event->mask & IN_MOVED_TO) printf("MOVED_TO");
     fprintf(stdout, "\n");
     // TODO more efficient buffer handling
     fflush(stdout);
@@ -112,7 +112,8 @@ static void handle_events(int fd) {
              ptr += sizeof(struct inotify_event) + event->len) {
             event = (const struct inotify_event *)ptr;
             output_event(event);
-            if (event->mask & IN_CREATE && event->mask & IN_ISDIR) {
+            if ((event->mask & IN_CREATE || event->mask & IN_ISDIR) &&
+                event->mask & IN_ISDIR) {
                 ListNode *node = storage_find(event->wd);
                 char *full_path;
                 asprintf(&full_path, "%s/%s", node->fpath, event->name);
