@@ -8,7 +8,7 @@ import isCi from "is-ci";
 waitForExpect.defaults.timeout = 200;
 
 if (isCi) {
-  waitForExpect.defaults.timeout *= 3;
+  waitForExpect.defaults.timeout *= 5;
 }
 
 const getTmpDir = () => {
