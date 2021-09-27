@@ -145,15 +145,15 @@ static void handle_events(int fd) {
 }
 
 int main(int argc, char *argv[]) {
-    char buf;
-    int poll_num;
-    nfds_t nfds;
-    struct pollfd fds[2];
-
     if (argc < 2) {
         printf("Usage: %s PATH [PATH ...]\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+
+    char buf;
+    int poll_num;
+    nfds_t nfds;
+    struct pollfd fds[2];
 
     /* Create the file descriptor for accessing the inotify API. */
     notify_init();

@@ -520,3 +520,27 @@ ${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/
   });
   watcher.dispose();
 });
+
+test("misc - setup watchers for each folder inside deeply nested folder", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  const count = 17;
+  await mkdir(`${tmpDir}${"/1".repeat(count)}`, { recursive: true });
+  await writeFile(`${tmpDir}/abc.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toContain(`${tmpDir}/abc.txt CREATE
+`);
+  });
+  watcher.clear();
+  for (let i = 0; i < count; i++) {
+    const name = `1/`.repeat(i) + "2";
+    await writeFile(`${tmpDir}/${name}`, "");
+    await waitForExpect(() => {
+      expect(watcher.stdout).toBe(`${tmpDir}/${name} CREATE
+${tmpDir}/${name} CLOSE_WRITE
+`);
+    });
+    watcher.clear();
+  }
+  watcher.dispose();
+});

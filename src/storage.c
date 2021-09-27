@@ -41,6 +41,7 @@ void storage_add(int wd, const char *fpath) {
 ListNode *storage_find(int wd) {
     ListNode *node = head;
     while (node != NULL) {
+        // printf("iteration %d\n", node->wd);
         node = node->next;
         if (node->wd == wd) {
             return node;
