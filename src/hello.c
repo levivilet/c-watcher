@@ -59,7 +59,7 @@ static void add_watch(const char *fpath) {
 }
 
 static void remove_watch(int wd) {
-    ListNode *node = storage_find(wd);
+    storage_remove(wd);
     notify_remove_watch(wd);
     // TODO remove from storage
 }
@@ -83,10 +83,8 @@ static void watch_recursively(const char *dir) {
 }
 
 /* Read all available inotify events from the file descriptor 'fd'.
-          wd is the table of watch descriptors for the directories in argv.
-          argc is the length of wd and argv.
-          argv is the list of watched directories.
-          Entry 0 of wd and argv is unused. */
+          wd is the table of watch descriptors
+           */
 
 static void handle_events(int fd) {
     /* Some systems cannot read integer variables if they are not
@@ -126,6 +124,9 @@ static void handle_events(int fd) {
                 if ((event->mask & IN_CREATE || event->mask & IN_MOVED_TO)) {
                     ListNode *node = storage_find(event->wd);
                     char *full_path;
+                    // TODO asprintf is said to be slow
+                    // https://news.ycombinator.com/item?id=3112700
+                    // maybe use something else
                     asprintf(&full_path, "%s/%s", node->fpath, event->name);
                     // printf("FULLPATH%s\n", path);
                     // const char* new_file = asprintf
@@ -206,7 +207,7 @@ int main(int argc, char *argv[]) {
 
     /* Close inotify file descriptor. */
 
-    close(fd);
+    notify_dispose();
 
     exit(EXIT_SUCCESS);
 }

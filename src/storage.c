@@ -49,3 +49,20 @@ ListNode *storage_find(int wd) {
     fprintf(stderr, "node is NULL, extremely unlucky user");
     exit(EXIT_FAILURE);
 }
+
+void storage_remove(int wd) {
+    // printf("STORAGE REMOVE %d\n", wd);
+    ListNode *prev = head;
+    ListNode *node = head;
+    while (node != NULL) {
+        prev = node;
+        node = node->next;
+        if (node->wd == wd) {
+            prev->next = node->next;
+            free(node);
+            return;
+        }
+    }
+    fprintf(stderr, "node is NULL, extremely unlucky user");
+    exit(EXIT_FAILURE);
+}

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/inotify.h>
+#include <unistd.h>
 
 int fd = -1;
 
@@ -12,6 +13,11 @@ void notify_init() {
         perror("inotify_init1");
         exit(EXIT_FAILURE);
     }
+}
+
+void notify_dispose() {
+    close(fd);
+    fd = -1;
 }
 
 int notify_add_watch(const char *fpath) {
