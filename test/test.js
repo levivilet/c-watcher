@@ -137,11 +137,11 @@ test("create folder", async () => {
   watcher.dispose();
 });
 
+// TODO this test might be flaky
 test("create folder - nested", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
-  await mkdir(`${tmpDir}/a`);
-  await mkdir(`${tmpDir}/a/b`);
+  await mkdir(`${tmpDir}/a/b`, { recursive: true });
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/a CREATEISDIR
 ${tmpDir}/a/b CREATEISDIR
@@ -165,13 +165,54 @@ ${tmpDir}/a/IGNORED
 
 test("remove folder - nested", async () => {
   const tmpDir = await getTmpDir();
-  await mkdir(`${tmpDir}/a`);
-  await mkdir(`${tmpDir}/a/b`);
+  await mkdir(`${tmpDir}/a/b`, { recursive: true });
   const watcher = await createWatcher([tmpDir]);
   await rm(`${tmpDir}/a/b`, { recursive: true });
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/a/b DELETEISDIR
 ${tmpDir}/a/b/IGNORED
+`);
+  });
+  watcher.dispose();
+});
+
+test("remove folder - nested deeply", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rm(`${tmpDir}/1`, { recursive: true });
+  await waitForExpect(() => {
+    expect(watcher.stdout)
+      .toBe(`${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/1/IGNORED
+${tmpDir}/1/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/1/IGNORED
+${tmpDir}/1/1/1 DELETEISDIR
+${tmpDir}/1/1/1/IGNORED
+${tmpDir}/1/1 DELETEISDIR
+${tmpDir}/1/1/IGNORED
+${tmpDir}/1 DELETEISDIR
+${tmpDir}/1/IGNORED
 `);
   });
   watcher.dispose();
