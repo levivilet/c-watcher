@@ -39,6 +39,9 @@ const createWatcher = async (args = [], options = {}) => {
     dispose() {
       child.kill();
     },
+    clear() {
+      result = "";
+    },
   };
 };
 
@@ -378,6 +381,74 @@ test.skip("misc - move folder in and out multiple times", async () => {
   await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
   // await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
   await writeFile(`${tmpDir}/old/abc.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROM
+`);
+  });
+  watcher.dispose();
+});
+
+test("misc - deeply nested folder", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  for (let i = 1; i < 20; i++) {
+    const name = "/1".repeat(i);
+    await mkdir(`${tmpDir}${name}`);
+    await waitForExpect(() => {
+      expect(watcher.stdout).toBe(`${tmpDir}${name} CREATEISDIR
+`);
+      watcher.clear();
+    });
+  }
+  watcher.dispose();
+});
+
+test.skip("misc - watch deeply nested folder (fast)", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  await mkdir(
+    `${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1`,
+    { recursive: true }
+  );
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 CREATEISDIR
+${tmpDir}/1/1 CREATEISDIR
+${tmpDir}/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+`);
+  });
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROM
 `);

@@ -44,11 +44,11 @@ const createWatcher = async (args = [], options = {}) => {
 
 const main = async () => {
   const tmpDir = await getTmpDir();
-  const tmpDir2 = await getTmpDir();
-  await mkdir(`${tmpDir}/old`);
   const watcher = await createWatcher([tmpDir]);
-  await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
-  // await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
+  await mkdir(
+    `${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1`,
+    { recursive: true }
+  );
   await setTimeout(100);
   console.log(watcher.stdout);
   // await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
