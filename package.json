@@ -16,9 +16,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/is-ci": "^3.0.0",
     "@types/jest": "^27.0.2",
-    "is-ci": "^3.0.0",
     "jest": "^27.2.2",
     "nodemon": "^2.0.13",
     "wait-for-expect": "^3.0.2"

@@ -16,12 +16,22 @@ const shortTimeout = () => setTimeout(0);
  * @param {import('child_process').SpawnOptions} options
  * @returns
  */
-const createWatcher = (args = [], options = {}) => {
+const createWatcher = async (args = [], options = {}) => {
   const child = spawn("./hello", args, options);
   let result = "";
   child.stdout.on("data", (data) => {
     result += data.toString();
   });
+  await new Promise((resolve) => {
+    const handleData = (data) => {
+      if (data.toString().includes("Watches established.")) {
+        child.stderr.off("data", handleData);
+        resolve();
+      }
+    };
+    child.stderr.on("data", handleData);
+  });
+
   return {
     get stdout() {
       return result;
@@ -36,7 +46,7 @@ const main = async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir2}/new`);
-  const watcher = createWatcher([tmpDir]);
+  const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/new`, `${tmpDir}/new`);
   await writeFile(`${tmpDir}/new/abc.txt`, "");
 
