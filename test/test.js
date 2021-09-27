@@ -215,6 +215,30 @@ ${tmpDir}/a,b,c.txt CLOSE_WRITE
   watcher.dispose();
 });
 
+test("misc - file with unicode", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/は`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/は CREATE
+${tmpDir}/は CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("misc - file with emoji", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/🗺️`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/🗺️ CREATE
+${tmpDir}/🗺️ CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
 test("misc - file with newline", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
