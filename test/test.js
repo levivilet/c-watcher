@@ -3,8 +3,13 @@ import { mkdir, mkdtemp, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import waitForExpect from "wait-for-expect";
+import isCi from "is-ci";
 
-waitForExpect.defaults.timeout = 300;
+waitForExpect.defaults.timeout = 200;
+
+if (isCi) {
+  waitForExpect.defaults.timeout *= 3;
+}
 
 const getTmpDir = () => {
   return mkdtemp(join(tmpdir(), "foo-"));
