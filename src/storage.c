@@ -1,9 +1,17 @@
+// TODO remove unused imports
+#include <errno.h>
+#include <ftw.h>
+#include <poll.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/inotify.h>
+#include <time.h>
+#include <unistd.h>
 
 typedef struct ListNode {
-    const char *fpath;
+    char *fpath;
     int wd;
     struct ListNode *next;
 } ListNode;
@@ -43,14 +51,36 @@ void storage_add(int wd, const char *fpath) {
 ListNode *storage_find(int wd) {
     ListNode *node = head;
     while (node != NULL) {
-        // printf("iteration %d\n", node->wd);
-        node = node->next;
         if (node->wd == wd) {
             return node;
         }
+        node = node->next;
     }
     fprintf(stderr, "node is NULL, extremely unlucky user");
     exit(EXIT_FAILURE);
+}
+
+void storage_rename(const char *moved_from, const char *moved_to) {
+    // printf("node check %s %s\n", moved_from, moved_to);
+    ListNode *node = head;
+    int len_from = strlen(moved_from);
+    int len_to = strlen(moved_to);
+    while (node != NULL) {
+        // fflush(stdout);
+        // int len_node = strlen(node->fpath);
+        // printf("check %s\n", node);
+        // fflush(stdout);
+        if (strncmp(moved_from, node->fpath, len_from) == 0) {
+            memcpy(node->fpath, moved_to, len_to);
+            // // char *new_name;
+            // // asprintf
+            // printf("MATCH, has been renamed\n");
+            // printf("%s\n", node->fpath);
+        }
+        node = node->next;
+    }
+    // free(moved_from);
+    // free(moved_to);
 }
 
 void storage_remove(int wd) {

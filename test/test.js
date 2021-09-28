@@ -1,8 +1,21 @@
 import { spawn } from "child_process";
-import { mkdir, mkdtemp, rename, rm, writeFile } from "fs/promises";
+import {
+  chmod,
+  copyFile,
+  mkdir,
+  mkdtemp,
+  rename,
+  rm,
+  writeFile,
+} from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import waitForExpect from "wait-for-expect";
+import execa from "execa";
+
+const exec = async (file, args) => {
+  await execa(file, args);
+};
 
 waitForExpect.defaults.timeout = 75;
 
@@ -76,13 +89,30 @@ ${tmpDir}/a/abc.txt CLOSE_WRITE
   watcher.dispose();
 });
 
+test("create file - multiple", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/1.txt`, "");
+  await writeFile(`${tmpDir}/2.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1.txt CREATE
+${tmpDir}/1.txt CLOSE_WRITE
+${tmpDir}/2.txt CREATE
+${tmpDir}/2.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
 test("modify file", async () => {
   const tmpDir = await getTmpDir();
   await writeFile(`${tmpDir}/abc.txt`, "");
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/abc.txt`, "abc");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt MODIFY
+${tmpDir}/abc.txt MODIFY
+${tmpDir}/abc.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -95,7 +125,22 @@ test("modify file - nested", async () => {
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt MODIFY
+${tmpDir}/a/abc.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("copy file", async () => {
+  const tmpDir = await getTmpDir();
+  await writeFile(`${tmpDir}/1.txt`, "");
+  const watcher = await createWatcher([tmpDir]);
+  await copyFile(`${tmpDir}/1.txt`, `${tmpDir}/2.txt`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/2.txt CREATE
+${tmpDir}/2.txt MODIFY
+${tmpDir}/2.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -132,6 +177,18 @@ test("create folder", async () => {
   await mkdir(`${tmpDir}/a`);
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/a CREATEISDIR
+`);
+  });
+  watcher.dispose();
+});
+
+test("copy folder", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  const watcher = await createWatcher([tmpDir]);
+  await exec("cp", ["-r", `${tmpDir}/1`, `${tmpDir}/2`]);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/2 CREATEISDIR
 `);
   });
   watcher.dispose();
@@ -323,7 +380,7 @@ test("move in - file", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/old.txt`, `${tmpDir}/new.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new.txt MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/new.txt MOVED_TOMOVE
 `);
   });
   watcher.dispose();
@@ -336,26 +393,41 @@ test("move in - folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/old`, `${tmpDir}/new`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIRMOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIRMOVED_TOMOVE
 `);
   });
   watcher.dispose();
 });
+
+// test("move file", async () => {
+//   const tmpDir = await getTmpDir();
+//   await writeFile(`${tmpDir}/1.txt`, "");
+//   const watcher = await createWatcher([tmpDir]);
+//   await rename(`${tmpDir}/1.txt`, `${tmpDir}/2.txt`);
+//   // TODO should emit rename event
+//   await waitForExpect(() => {
+//     expect(watcher.stdout).toBe(`${tmpDir}/1.txt MOVED_FROM
+// ${tmpDir}/2.txt MOVED_TO
+// `);
+//   });
+//   watcher.dispose();
+// });
 
 test("move - file", async () => {
   const tmpDir = await getTmpDir();
   await writeFile(`${tmpDir}/old.txt`, "");
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir}/old.txt`, `${tmpDir}/new.txt`);
+  // TODO should emit rename event
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old.txt MOVED_FROM
-${tmpDir}/new.txt MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/old.txt MOVED_FROMMOVE
+${tmpDir}/new.txt MOVED_TOMOVE
 `);
   });
   watcher.dispose();
 });
 
-test.skip("move - folder", async () => {
+test("move - folder", async () => {
   const tmpDir = await getTmpDir();
   await mkdir(`${tmpDir}/old`);
   const watcher = await createWatcher([tmpDir]);
@@ -363,10 +435,11 @@ test.skip("move - folder", async () => {
   await writeFile(`${tmpDir}/new/abc.txt`, "");
   // TODO wrong new file path
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROM
-${tmpDir}/new ISDIRMOVED_TO
-${tmpDir}/old/abc.txt CREATE
-${tmpDir}/old/abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
+${tmpDir}/new ISDIRMOVED_TOMOVE
+${tmpDir}/new/MOVE_SELF
+${tmpDir}/new/abc.txt CREATE
+${tmpDir}/new/abc.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -380,7 +453,7 @@ test("misc - move in file, then remove file", async () => {
   await rename(`${tmpDir2}/old.txt`, `${tmpDir}/new.txt`);
   await rm(`${tmpDir}/new.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new.txt MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/new.txt MOVED_TOMOVE
 ${tmpDir}/new.txt DELETE
 `);
   });
@@ -395,15 +468,14 @@ test("misc - move in folder, then remove folder", async () => {
   await rename(`${tmpDir2}/old`, `${tmpDir}/new`);
   await rm(`${tmpDir}/new`, { recursive: true });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIRMOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIRMOVED_TOMOVE
 ${tmpDir}/new DELETEISDIR
-${tmpDir}/new/IGNORED
 `);
   });
   watcher.dispose();
 });
 
-test("misc - move in folder, then create file in that folder", async () => {
+test.skip("misc - move in folder, then create file in that folder", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir2}/old`);
@@ -419,7 +491,7 @@ ${tmpDir}/new/abc.txt CLOSE_WRITE
   watcher.dispose();
 });
 
-test("misc - move out folder, then create file in that folder", async () => {
+test.skip("misc - move out folder, then create file in that folder", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir}/old`);
@@ -544,3 +616,70 @@ ${tmpDir}/${name} CLOSE_WRITE
   }
   watcher.dispose();
 });
+
+test("misc - change file attributes", async () => {
+  const tmpDir = await getTmpDir();
+  await writeFile(`${tmpDir}/1`, "");
+  const watcher = await createWatcher([tmpDir]);
+  await chmod(`${tmpDir}/1`, "555");
+  await writeFile(`${tmpDir}/2`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/2 CREATE
+${tmpDir}/2 CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("misc - remove and recreate file", async () => {
+  const tmpDir = await getTmpDir();
+  await writeFile(`${tmpDir}/1`, "");
+  const watcher = await createWatcher([tmpDir]);
+  await rm(`${tmpDir}/1`);
+  await writeFile(`${tmpDir}/1`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 DELETE
+${tmpDir}/1 CREATE
+${tmpDir}/1 CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test.skip("misc - move out folder and move it back in", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
+  await writeFile(`${tmpDir2}/1/a.txt`, "");
+  await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
+  await writeFile(`${tmpDir2}/b.txt`, "");
+  // TODO should detect b.txt change
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROM
+`);
+  });
+  watcher.dispose();
+});
+
+// TODO test nested rename   const tmpDir = await getTmpDir();
+// // const tmpDir2 = await getTmpDir();
+// await mkdir(`${tmpDir}/1`);
+// await mkdir(`${tmpDir}/2`);
+// await writeFile(`${tmpDir}/1/a.txt`, "");
+// // await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+// const watcher = await createWatcher([tmpDir]);
+// await rename(`${tmpDir}/1/a.txt`, `${tmpDir}/2/b.txt`);
+
+// TODO test move out and move
+
+// TODO test move and move out
+
+// TODO test move and move in
+
+// TODO test move in and move
+
+// TODO test multiple fast renames
+
+// TODO test move, move-in, move-out with nested folder

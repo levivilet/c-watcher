@@ -11,3 +11,5 @@ void storage_add(int wd, const char *fpath);
 ListNode *storage_find(int wd);
 
 void storage_remove(int wd);
+
+void storage_rename(const char* oldPath, const char* newPath);

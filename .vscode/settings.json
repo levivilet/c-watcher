@@ -1,0 +1,12 @@
+{
+  "files.associations": {
+    ".stylintrc": "json",
+    ".stylelintrc": "json",
+    ".prettierrc": "json",
+    ".graphqlconfig": "json",
+    "**/ci/*.yml": "azure-pipelines",
+    "*.transcript": "json",
+    ".markdownlintrc": "json",
+    "*.tcc": "c"
+  }
+}

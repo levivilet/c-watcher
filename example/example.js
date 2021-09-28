@@ -44,17 +44,45 @@ const createWatcher = async (args = [], options = {}) => {
 };
 
 const main = async () => {
-  const tmpDir = await getTmpDir();
-  const s = performance.now();
-  const watcher = await createWatcher([`${tmpDir}`]);
-  // await writeFile(`${tmpDir}/a.txt`, "");
-  const e = performance.now();
-  console.log(e - s);
+  // const tmpDir = await getTmpDir();
+  // const s = performance.now();
+  // const watcher = await createWatcher([`${tmpDir}`]);
+  // // await writeFile(`${tmpDir}/a.txt`, "");
+  // const e = performance.now();
+  // console.log(e - s);
+
+  // const tmpDir = await getTmpDir();
+  // const tmpDir2 = await getTmpDir();
+  // await mkdir(`${tmpDir}/1`);
+  // const watcher = await createWatcher([tmpDir]);
+  // await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  // await writeFile(`${tmpDir}/3`, "");
+  // await writeFile(`${tmpDir2}/1/a.txt`, "");
+  // await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
+  // await writeFile(`${tmpDir2}/b.txt`, "");
   // await mkdir(
   //   `${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1`,
   //   { recursive: true }
   // );
-  await setTimeout(100);
+
+  // const tmpDir = await getTmpDir();
+  // // const tmpDir2 = await getTmpDir();
+  // await mkdir(`${tmpDir}/1`);
+  // await mkdir(`${tmpDir}/2`);
+  // await writeFile(`${tmpDir}/1/a.txt`, "");
+  // // await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  // const watcher = await createWatcher([tmpDir]);
+  // await rename(`${tmpDir}/1/a.txt`, `${tmpDir}/2/b.txt`);
+  const tmpDir = await getTmpDir();
+  // const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  // await writeFile(`${tmpDir}/1/a.txt`, "");
+  // await mkdir(`${tmpDir}/2`);
+  // await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+
+  await setTimeout(160);
   console.log(watcher.stdout);
   // await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
   // await writeFile(`${tmpDir}/old/abc.txt`, "");
