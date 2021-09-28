@@ -24,6 +24,7 @@ const createWatcher = async (args = [], options = {}) => {
   });
   await new Promise((resolve) => {
     const handleData = (data) => {
+      console.log(data.toString());
       if (data.toString().includes("Watches established.")) {
         child.stderr.off("data", handleData);
         resolve();
@@ -45,15 +46,16 @@ const createWatcher = async (args = [], options = {}) => {
 const main = async () => {
   const tmpDir = await getTmpDir();
   const s = performance.now();
-  const watcher = await createWatcher([tmpDir]);
+  const watcher = await createWatcher([`${tmpDir}`]);
+  // await writeFile(`${tmpDir}/a.txt`, "");
   const e = performance.now();
   console.log(e - s);
   // await mkdir(
   //   `${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1`,
   //   { recursive: true }
   // );
-  // await setTimeout(100);
-  // console.log(watcher.stdout);
+  await setTimeout(100);
+  console.log(watcher.stdout);
   // await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
   // await writeFile(`${tmpDir}/old/abc.txt`, "");
 

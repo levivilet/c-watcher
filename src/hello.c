@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/inotify.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "notify.h"
@@ -47,7 +48,6 @@ static void output_event(const struct inotify_event *event) {
 
     fprintf(stdout, "\n");
     // TODO more efficient buffer handling
-    fflush(stdout);
 }
 
 static void add_watch(const char *fpath) {
@@ -56,6 +56,7 @@ static void add_watch(const char *fpath) {
 
     // TODO use dynamic array (or better tree)
     storage_add(wd, fpath);
+    // storage_print();
 }
 
 static void remove_watch(int wd) {
@@ -66,6 +67,8 @@ static void remove_watch(int wd) {
 
 static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
                         struct FTW *ftwbuf) {
+    // printf("VISIT PATH %s\n", fpath);
+    // sb.f
     if (tflag == FTW_D) {
         add_watch(fpath);
     }
@@ -76,7 +79,9 @@ static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
 /* Walk folder recursively and setup watcher for each file */
 static void watch_recursively(const char *dir) {
     int flags = FTW_PHYS;
-    if (nftw(dir, visit_dirent, 20, flags) == -1) {
+    // TODO tweak amount of descriptors to tweak performance
+    int descriptors = 255;
+    if (nftw(dir, visit_dirent, descriptors, flags) == -1) {
         perror("nftw");
         exit(EXIT_FAILURE);
     }
@@ -142,6 +147,7 @@ static void handle_events(int fd) {
             }
         }
     }
+    fflush(stdout);
 }
 
 int main(int argc, char *argv[]) {
@@ -159,9 +165,14 @@ int main(int argc, char *argv[]) {
     notify_init();
 
     fprintf(stderr, "Setting up watches. This may take a while!\n");
+    clock_t start = clock();
 
     watch_recursively(argv[1]);
 
+    /*Do something*/
+    clock_t end = clock();
+    float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+    fprintf(stderr, "Took %f\n", seconds);
     fprintf(stderr, "Watches established.\n");
 
     // storage_print();

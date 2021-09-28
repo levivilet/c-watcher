@@ -22,10 +22,12 @@ static ListNode *current = &EMPTY_NODE;
 
 void storage_print() {
     ListNode *current = head;
+    printf("\n----- Storage -----\n");
     while (current != NULL) {
         printf("node: %d %s\n", current->wd, current->fpath);
         current = current->next;
     }
+    printf("\n");
 }
 
 void storage_add(int wd, const char *fpath) {
