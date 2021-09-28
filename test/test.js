@@ -433,13 +433,38 @@ test("move - folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir}/old`, `${tmpDir}/new`);
   await writeFile(`${tmpDir}/new/abc.txt`, "");
-  // TODO wrong new file path
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
 ${tmpDir}/new ISDIRMOVED_TOMOVE
 ${tmpDir}/new/MOVE_SELF
 ${tmpDir}/new/abc.txt CREATE
 ${tmpDir}/new/abc.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("move - nested folder", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1/1/1/1`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  await writeFile(`${tmpDir}/2/2.txt`, "");
+  await writeFile(`${tmpDir}/2/1/2.txt`, "");
+  await writeFile(`${tmpDir}/2/1/1/2.txt`, "");
+  await writeFile(`${tmpDir}/2/1/1/1/2.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2 ISDIRMOVED_TOMOVE
+${tmpDir}/2/MOVE_SELF
+${tmpDir}/2/2.txt CREATE
+${tmpDir}/2/2.txt CLOSE_WRITE
+${tmpDir}/2/1/2.txt CREATE
+${tmpDir}/2/1/2.txt CLOSE_WRITE
+${tmpDir}/2/1/1/2.txt CREATE
+${tmpDir}/2/1/1/2.txt CLOSE_WRITE
+${tmpDir}/2/1/1/1/2.txt CREATE
+${tmpDir}/2/1/1/1/2.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
