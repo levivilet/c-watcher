@@ -22,9 +22,7 @@ typedef struct ListNode {
 static int fd;
 
 /* structure for mapping wd to directory path */
-static ListNode EMPTY_NODE = {"", 0};
-static ListNode *head = &EMPTY_NODE;
-static ListNode *current = &EMPTY_NODE;
+static ListNode *head = NULL;
 
 /* end globals */
 
@@ -41,11 +39,13 @@ void storage_print() {
 void storage_add(int wd, const char *fpath) {
     // printf("storage add %s %d\n", fpath, wd);
     // storage_print();
-    ListNode *next = (ListNode *)calloc(1, sizeof(ListNode));
-    next->wd = wd;
-    next->fpath = strdup(fpath);
-    current->next = next;
-    current = next;
+    ListNode *new_node = (ListNode *)calloc(1, sizeof(ListNode));
+    new_node->wd = wd;
+    new_node->fpath = strdup(fpath);
+    new_node->next = head;
+    head = new_node;
+    // current->next = next;
+    // current = next;
 }
 
 ListNode *storage_find(int wd) {
@@ -81,8 +81,6 @@ void storage_rename(const char *moved_from, const char *moved_to) {
         }
         node = node->next;
     }
-    // free(moved_from);
-    // free(moved_to);
 }
 
 void storage_remove_by_wd(int wd) {

@@ -512,21 +512,41 @@ test("move out folder, then create file in that folder", async () => {
   watcher.dispose();
 });
 
-test.skip("misc - move folder in and out multiple times", async () => {
+test("misc - move folder in and out multiple times", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir}/old`);
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
 `);
   });
   await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
-  // await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
   await writeFile(`${tmpDir}/old/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
+${tmpDir}/old ISDIRMOVED_TOMOVE
+${tmpDir}/old/abc.txt CREATE
+${tmpDir}/old/abc.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("misc - move folder in and out multiple times (fast)", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/old`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
+  await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
+  await writeFile(`${tmpDir}/old/abc.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
+${tmpDir}/old ISDIRMOVED_TOMOVE
+${tmpDir}/old/abc.txt CREATE
+${tmpDir}/old/abc.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -769,3 +789,13 @@ ${tmpDir}/1/MOVE_SELF
 // TODO test remove lowest wd
 
 // TODO test remove highest wd
+
+// TODO this results in bug -> investigate
+// const tmpDir = await getTmpDir();
+// const tmpDir2 = await getTmpDir();
+// await mkdir(`${tmpDir}/old`);
+// const watcher = await createWatcher([tmpDir]);
+// await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
+// await setTimeout(100);
+// await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
+// await writeFile(`${tmpDir}/old/abc.txt`, "");

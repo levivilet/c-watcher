@@ -46,12 +46,12 @@ const createWatcher = async (args = [], options = {}) => {
 const main = async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
-  await mkdir(`${tmpDir}/1`);
-  await mkdir(`${tmpDir2}/2`);
+  await mkdir(`${tmpDir}/old`);
   const watcher = await createWatcher([tmpDir]);
-  await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
-  await rename(`${tmpDir2}/2`, `${tmpDir}/1`);
-  // await writeFile(`${tmpDir}/a.txt`, "");
+  await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
+  await setTimeout(100);
+  await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
+  await writeFile(`${tmpDir}/old/abc.txt`, "");
 
   await setTimeout(160);
   console.log(watcher.stdout);

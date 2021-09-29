@@ -32,6 +32,7 @@ static void add_watch(const char *fpath) {
     // TODO use dynamic array (or better tree)
     storage_add(wd, fpath);
     // storage_print();
+    // storage_print();
 }
 
 static void remove_watch_by_path(const char *fpath) {
@@ -65,10 +66,22 @@ static void watch_recursively(const char *dir) {
     }
 }
 
+static void event_print(const struct inotify_event *event) {
+    printf("\n");
+    printf("event:\n");
+    if (event->len) {
+        printf("path: %s\n", event->name);
+    }
+    printf("wd: %d", event->wd);
+    printf("\n");
+}
+
 static void output_event(const struct inotify_event *event) {
     if (event->mask & IN_IGNORED) {
         return;
     }
+    // event_print(event);
+    // storage_print();
     // printf("EVENT\n");
 
     /* Print the name of the file. */
