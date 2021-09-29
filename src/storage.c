@@ -108,6 +108,8 @@ void storage_remove_by_wd(int wd) {
 void storage_remove_by_path(const char *fpath) {
     ListNode *prev = head;
     ListNode *node = head;
+    // TODO two pointer trick can be more efficient and get rid of prev but
+    // that would make the code very confusing
     while (node != NULL) {
         if (strcmp(node->fpath, fpath) == 0) {
             if (node == head) {
@@ -126,16 +128,11 @@ void storage_remove_by_path(const char *fpath) {
 }
 
 int storage_find_by_path(const char *fpath) {
-    // ListNode *prev = head;
     ListNode *node = head;
     while (node != NULL) {
         if (strcmp(node->fpath, fpath) == 0) {
-            // prev->next = node->next;
-            // int wd = node->wd;
-            // free(node);
             return node->wd;
         }
-        // prev = node;
         node = node->next;
     }
     fprintf(stderr, "node is NULL, extremely unlucky user");
