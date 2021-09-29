@@ -65,22 +65,22 @@ const main = async () => {
   //   { recursive: true }
   // );
 
-  // const tmpDir = await getTmpDir();
-  // // const tmpDir2 = await getTmpDir();
-  // await mkdir(`${tmpDir}/1`);
-  // await mkdir(`${tmpDir}/2`);
-  // await writeFile(`${tmpDir}/1/a.txt`, "");
-  // // await rename(`${tmpDir}/1`, `${tmpDir}/2`);
-  // const watcher = await createWatcher([tmpDir]);
-  // await rename(`${tmpDir}/1/a.txt`, `${tmpDir}/2/b.txt`);
   const tmpDir = await getTmpDir();
   // const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir}/1`);
+  await mkdir(`${tmpDir}/2`);
+  await writeFile(`${tmpDir}/1/a.txt`, "");
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  // await rename(`${tmpDir}/1/a.txt`, `${tmpDir}/2/b.txt`);
+  // const tmpDir = await getTmpDir();
+  // const tmpDir2 = await getTmpDir();
+  // await mkdir(`${tmpDir}/1`);
   // await writeFile(`${tmpDir}/1/a.txt`, "");
   // await mkdir(`${tmpDir}/2`);
   // await rename(`${tmpDir}/1`, `${tmpDir}/2`);
-  const watcher = await createWatcher([tmpDir]);
-  await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  // const watcher = await createWatcher([tmpDir]);
+  // await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
 
   await setTimeout(160);
   console.log(watcher.stdout);

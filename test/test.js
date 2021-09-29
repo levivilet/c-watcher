@@ -708,3 +708,9 @@ test.skip("misc - move out folder and move it back in", async () => {
 // TODO test multiple fast renames
 
 // TODO test move, move-in, move-out with nested folder
+
+// TODO test no memory leak when final event is moved_from
+
+// TODO test rename short path to long path
+
+// TODO test rename long path to short path

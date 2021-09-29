@@ -89,12 +89,13 @@ static void watch_recursively(const char *dir) {
     }
 }
 
-void full_path(char **fpath, const struct inotify_event *event) {
+char *full_path(char *fpath, const struct inotify_event *event) {
     ListNode *node = storage_find(event->wd);
-    if (asprintf(fpath, "%s/%s", node->fpath, event->name) == -1) {
+    if (asprintf(&fpath, "%s/%s", node->fpath, event->name) == -1) {
         perror("asprintf");
         exit(EXIT_FAILURE);
     }
+    return fpath;
 }
 
 /* Read all available inotify events from the file descriptor 'fd'.
@@ -144,7 +145,7 @@ static void handle_events(int fd) {
                         // just rename, keep watches
                         // printf("keep watch inside\n");
                         char *moved_to;
-                        full_path(&moved_to, event);
+                        full_path(moved_to, event);
                         // printf("moved from %s\n", moved_from);
                         // printf("moved to %s\n", moved_to);
                         // printf("storage rename\n");
@@ -190,7 +191,7 @@ static void handle_events(int fd) {
                 // folder remove_watch(event->wd);
                 // }
                 if (event->mask & IN_MOVED_FROM) {
-                    full_path(&moved_from, event);
+                    full_path(moved_from, event);
                     // printf("MOVED from, from%s %d\n", moved_from->fpath,
                     //        event->wd);
                     // printf("%s\n", event->name);
@@ -206,7 +207,6 @@ static void handle_events(int fd) {
             }
         }
     }
-    // TODO free moved from if it is not null
     fflush(stdout);
 }
 
