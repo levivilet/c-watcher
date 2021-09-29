@@ -4,6 +4,7 @@ import {
   copyFile,
   mkdir,
   mkdtemp,
+  readdir,
   rename,
   rm,
   writeFile,
@@ -761,6 +762,41 @@ ${tmpDir}/2 ISDIRMOVED_TOMOVE
   watcher.dispose();
 });
 
+test("nested rename", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1/2/3/4/5`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1/2/3/4/5`, `${tmpDir}/1/6`);
+  await rename(`${tmpDir}/1/2/3`, `${tmpDir}/1/6/3`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5 ISDIRMOVED_FROMMOVE
+${tmpDir}/1/6 ISDIRMOVED_TOMOVE
+${tmpDir}/1/2/3 ISDIRMOVED_FROMMOVE
+${tmpDir}/1/6/3 ISDIRMOVED_TOMOVE
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/a.txt`, "");
+  await writeFile(`${tmpDir}/1/b.txt`, "");
+  await writeFile(`${tmpDir}/1/2/c.txt`, "");
+  await writeFile(`${tmpDir}/1/6/d.txt`, "");
+  await writeFile(`${tmpDir}/1/6/3/e.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a.txt CREATE
+${tmpDir}/a.txt CLOSE_WRITE
+${tmpDir}/1/b.txt CREATE
+${tmpDir}/1/b.txt CLOSE_WRITE
+${tmpDir}/1/2/c.txt CREATE
+${tmpDir}/1/2/c.txt CLOSE_WRITE
+${tmpDir}/1/6/d.txt CREATE
+${tmpDir}/1/6/d.txt CLOSE_WRITE
+${tmpDir}/1/6/3/e.txt CREATE
+${tmpDir}/1/6/3/e.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
 // TODO test nested rename   const tmpDir = await getTmpDir();
 // // const tmpDir2 = await getTmpDir();
 // await mkdir(`${tmpDir}/1`);
@@ -834,8 +870,6 @@ ${tmpDir}/2 ISDIRMOVED_TOMOVE
   });
   watcher.dispose();
 });
-
-// TODO test multiple fast renames
 
 // TODO test move, move-in, move-out with nested folder
 

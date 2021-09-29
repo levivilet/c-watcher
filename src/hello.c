@@ -139,11 +139,13 @@ static void adjust_watchers(const struct inotify_event *event) {
             full_path(&moved_from, moved_from_event);
             char *moved_to;
             full_path(&moved_to, event);
+            // storage_print();
             // printf("moved from %s\n", moved_from);
             // printf("moved to %s\n", moved_to);
             // printf("storage rename\n");
             // fflush(stdout);
             storage_rename(moved_from, moved_to);
+            // storage_print();
             free(moved_from);
             free(moved_to);
             // storage_print();

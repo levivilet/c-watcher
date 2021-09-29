@@ -73,7 +73,7 @@ void storage_rename(const char *moved_from, const char *moved_to) {
         // printf("check %s\n", node);
         // fflush(stdout);
         if (strncmp(moved_from, node->fpath, len_from) == 0) {
-            memcpy(node->fpath, moved_to, len_to);
+            memcpy(node->fpath, moved_to, len_from);
             // // char *new_name;
             // // asprintf
             // printf("MATCH, has been renamed\n");
