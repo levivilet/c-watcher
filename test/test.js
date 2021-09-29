@@ -684,7 +684,8 @@ test.skip("misc - move out folder and move it back in", async () => {
   await writeFile(`${tmpDir2}/b.txt`, "");
   // TODO should detect b.txt change
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/1 ISDIRMOVED_TOMOVE
 `);
   });
   watcher.dispose();
@@ -728,24 +729,37 @@ ${tmpDir}/4 ISDIRMOVED_TOMOVE
   watcher.dispose();
 });
 
-test.skip("move in folder, move out another folder", async () => {
+test("move in folder, move out another folder", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  await mkdir(`${tmpDir2}/2`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir2}/2`, `${tmpDir}/2`);
+  await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/2 ISDIRMOVED_TOMOVE
+${tmpDir}/1 ISDIRMOVED_FROMMOVE
+`);
+  });
+  watcher.dispose();
+});
+
+test("move out folder, move in another folder", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir}/1`);
   await mkdir(`${tmpDir2}/2`);
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
-  await rename(`${tmpDir2}/2`, `${tmpDir}/1`);
-  // TODO new folder should appear
+  await rename(`${tmpDir2}/2`, `${tmpDir}/2`);
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/1/MOVE_SELF
+${tmpDir}/2 ISDIRMOVED_TOMOVE
 `);
   });
   watcher.dispose();
 });
-
-// TODO test move out folder, move in another folder
 
 // TODO test nested rename   const tmpDir = await getTmpDir();
 // // const tmpDir2 = await getTmpDir();
