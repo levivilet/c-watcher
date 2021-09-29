@@ -48,8 +48,8 @@ const main = async () => {
   await mkdir(`${tmpDir}/1/2/3/4/5`, { recursive: true });
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir}/1/2/3/4/5`, `${tmpDir}/1/6`);
-  // await rename(`${tmpDir}/1/2/3`, `${tmpDir}/1/6/3`);
-  // await writeFile(`${tmpDir}/1/6/d.txt`, "");
+  await rename(`${tmpDir}/1/2/3`, `${tmpDir}/1/6/3`);
+  await writeFile(`${tmpDir}/1/6/d.txt`, "");
 
   await setTimeout(160);
   console.log(watcher.stdout);

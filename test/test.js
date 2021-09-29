@@ -797,6 +797,21 @@ ${tmpDir}/1/6/3/e.txt CLOSE_WRITE
   watcher.dispose();
 });
 
+test("rename subtree", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1/2/3/4/5/6/7/8/9`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1/2/3/4/5`, `${tmpDir}/1/5`);
+  await writeFile(`${tmpDir}/1/5/6/7/a.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5 ISDIRMOVED_FROMMOVE
+${tmpDir}/1/5 ISDIRMOVED_TOMOVE
+${tmpDir}/1/5/a.txt CREATE
+`);
+  });
+  watcher.dispose();
+});
+
 // TODO test nested rename   const tmpDir = await getTmpDir();
 // // const tmpDir2 = await getTmpDir();
 // await mkdir(`${tmpDir}/1`);
