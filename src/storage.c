@@ -56,6 +56,8 @@ ListNode *storage_find(int wd) {
         }
         node = node->next;
     }
+    printf("ERR %d\n", wd);
+    fflush(stdout);
     fprintf(stderr, "node is NULL, extremely unlucky user");
     exit(EXIT_FAILURE);
 }
@@ -83,19 +85,37 @@ void storage_rename(const char *moved_from, const char *moved_to) {
     // free(moved_to);
 }
 
-void storage_remove(int wd) {
+void storage_remove_by_wd(int wd) {
     // printf("STORAGE REMOVE %d\n", wd);
     ListNode *prev = head;
     ListNode *node = head;
     while (node != NULL) {
-        prev = node;
-        node = node->next;
         if (node->wd == wd) {
             prev->next = node->next;
             free(node);
             return;
         }
+        prev = node;
+        node = node->next;
     }
     fprintf(stderr, "node is NULL, extremely unlucky user");
     exit(EXIT_FAILURE);
+}
+
+int storage_find_by_path(const char *fpath) {
+    // ListNode *prev = head;
+    ListNode *node = head;
+    while (node != NULL) {
+        if (strcmp(node->fpath, fpath) == 0) {
+            // prev->next = node->next;
+            // int wd = node->wd;
+            // free(node);
+            return node->wd;
+        }
+        // prev = node;
+        node = node->next;
+    }
+    fprintf(stderr, "node is NULL, extremely unlucky user");
+    exit(EXIT_FAILURE);
+    return -1;
 }

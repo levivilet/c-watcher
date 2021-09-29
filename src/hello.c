@@ -15,13 +15,70 @@
 
 extern int fd;
 
+const struct inotify_event *moved_from_event = NULL;
+
+void full_path(char **fpath, const struct inotify_event *event) {
+    ListNode *node = storage_find(event->wd);
+    if (asprintf(fpath, "%s/%s", node->fpath, event->name) == -1) {
+        perror("asprintf");
+        exit(EXIT_FAILURE);
+    }
+}
+
+static void add_watch(const char *fpath) {
+    int wd = notify_add_watch(fpath);
+    // fprintf(stdout, "ADD WATCH %s\n", fpath);
+
+    // TODO use dynamic array (or better tree)
+    storage_add(wd, fpath);
+    // storage_print();
+}
+
+static void remove_watch_by_path(const char *fpath) {
+    // printf("rm by path %s\n", fpath);
+    // storage_print();
+    int wd = storage_find_by_path(fpath);
+    // printf("got wd%d\n", wd);
+    notify_remove_watch(wd);
+    // storage_print();
+}
+
+static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
+                        struct FTW *ftwbuf) {
+    // printf("VISIT PATH %s\n", fpath);
+    // sb.f
+    if (tflag == FTW_D) {
+        add_watch(fpath);
+    }
+
+    return 0; /* To tell nftw() to continue */
+}
+
+/* Walk folder recursively and setup watcher for each file */
+static void watch_recursively(const char *dir) {
+    int flags = FTW_PHYS;
+    // TODO tweak amount of descriptors to tweak performance
+    int descriptors = 255;
+    if (nftw(dir, visit_dirent, descriptors, flags) == -1) {
+        perror("nftw");
+        exit(EXIT_FAILURE);
+    }
+}
+
 static void output_event(const struct inotify_event *event) {
+    if (event->mask & IN_IGNORED) {
+        return;
+    }
+    // printf("EVENT\n");
+
     /* Print the name of the file. */
     ListNode *node = storage_find(event->wd);
 
     // fprintf(stdout, "%d ", node->wd);
     // fprintf(stdout, "COOKIE %d ", event->cookie);
 
+    fflush(stdout);
+    // if()
     fprintf(stdout, "%s/", node->fpath);
 
     if (event->len) fprintf(stdout, "%s ", event->name);
@@ -47,53 +104,78 @@ static void output_event(const struct inotify_event *event) {
     if (event->mask & IN_ACCESS) fprintf(stdout, "ACCESS");
     if (event->mask & IN_IGNORED) fprintf(stdout, "IGNORED");
 
+    // TODO more efficient buffer handling
+
     fprintf(stdout, "\n");
     fflush(stdout);
-    // TODO more efficient buffer handling
 }
 
-static void add_watch(const char *fpath) {
-    int wd = notify_add_watch(fpath);
-    // fprintf(stdout, "ADD WATCH %s\n", fpath);
-
-    // TODO use dynamic array (or better tree)
-    storage_add(wd, fpath);
-    // storage_print();
-}
-
-static void remove_watch(int wd) {
-    storage_remove(wd);
-    notify_remove_watch(wd);
-    // TODO remove from storage
-}
-
-static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
-                        struct FTW *ftwbuf) {
-    // printf("VISIT PATH %s\n", fpath);
-    // sb.f
-    if (tflag == FTW_D) {
-        add_watch(fpath);
+static void adjust_watchers(const struct inotify_event *event) {
+    // printf("EVENT LENGTH %d\n", event->len);
+    // printf("EVENT NAME %s\n", event->name);
+    if (!event->mask & IN_ISDIR) {
+        return;
     }
-
-    return 0; /* To tell nftw() to continue */
-}
-
-/* Walk folder recursively and setup watcher for each file */
-static void watch_recursively(const char *dir) {
-    int flags = FTW_PHYS;
-    // TODO tweak amount of descriptors to tweak performance
-    int descriptors = 255;
-    if (nftw(dir, visit_dirent, descriptors, flags) == -1) {
-        perror("nftw");
-        exit(EXIT_FAILURE);
+    if (moved_from_event) {
+        // TODO check cookie
+        if (event->mask & IN_MOVED_TO) {
+            // matching event -> rename
+            // just rename, keep watches
+            // printf("keep watch inside\n");
+            char *moved_from;
+            full_path(&moved_from, moved_from_event);
+            char *moved_to;
+            full_path(&moved_to, event);
+            // printf("moved from %s\n", moved_from);
+            // printf("moved to %s\n", moved_to);
+            // printf("storage rename\n");
+            // fflush(stdout);
+            storage_rename(moved_from, moved_to);
+            free(moved_from);
+            free(moved_to);
+            // storage_print();
+            // printf("done storage rename\n");
+            // fflush(stdout);
+            // printf("new full path %s\n", fpath);
+            // storage_rename();
+            // moved_from->fpath=
+            moved_from_event = NULL;
+            return;
+        }
+        // moved outside -> remove watch
+        char *fpath;
+        full_path(&fpath, event);
+        printf("event %s\n", event->name);
+        // storage_print();
+        printf("fpath: %s\n", fpath);
+        // printf("remove watch\n");
+        // TODO remove by path?
+        notify_remove_watch(moved_from_event->wd);
+        moved_from_event = NULL;
+        return;
     }
-}
-
-void full_path(char **fpath, const struct inotify_event *event) {
-    ListNode *node = storage_find(event->wd);
-    if (asprintf(fpath, "%s/%s", node->fpath, event->name) == -1) {
-        perror("asprintf");
-        exit(EXIT_FAILURE);
+    // printf("below\n");
+    if ((event->mask & IN_CREATE) || event->mask & IN_MOVED_TO) {
+        // new folder -> add watcher
+        // printf("ADD WATCHER\n");
+        char *fpath;
+        full_path(&fpath, event);
+        // printf("FULLPATH%s\n", path);
+        // printf("NEW_DIR in %s\n", node->fpath);
+        // printf("NAME: %s\n", event->name);
+        watch_recursively(fpath);
+        free(fpath);
+    }
+    if (event->mask & IN_MOVED_FROM) {
+        // printf("MOVED_FROM\n");
+        moved_from_event = event;
+        // printf("MOVED from, from%s %d\n", moved_from->fpath,
+        //        event->wd);
+        // printf("%s\n", event->name);
+    }
+    if (event->mask & IN_IGNORED) {
+        // folder has been ignored -> remove from storage
+        storage_remove_by_wd(event->wd);
     }
 }
 
@@ -104,8 +186,8 @@ void full_path(char **fpath, const struct inotify_event *event) {
 static void handle_events(int fd) {
     /* Some systems cannot read integer variables if they are not
                 properly aligned. On other systems, incorrect alignment may
-                decrease performance. Hence, the buffer used for reading from
-                the inotify file descriptor should have the same alignment as
+                decrease performance. Hence, the buffer used for reading
+       from the inotify file descriptor should have the same alignment as
                 struct inotify_event. */
 
     char buf[4096] __attribute__((aligned(__alignof__(struct inotify_event))));
@@ -113,12 +195,13 @@ static void handle_events(int fd) {
     ssize_t len;
 
     /* Loop while events can be read from inotify file descriptor. */
-    char *moved_from = NULL;
 
     for (;;) {
+        // printf("LOOP ITERATION\n");
         /* Read some events. */
 
         len = read(fd, buf, sizeof(buf));
+        // printf("LEN: %d\n", len);
         if (len == -1 && errno != EAGAIN) {
             perror("read");
             exit(EXIT_FAILURE);
@@ -136,76 +219,27 @@ static void handle_events(int fd) {
              ptr += sizeof(struct inotify_event) + event->len) {
             event = (const struct inotify_event *)ptr;
             output_event(event);
-            if (event->mask & IN_ISDIR) {
-                if (moved_from) {
-                    // printf("has moved from object\n");
-                    if (event->mask & IN_MOVED_TO) {
-                        // moved inside watched area
-                        // just rename, keep watches
-                        // printf("keep watch inside\n");
-                        char *moved_to;
-                        full_path(&moved_to, event);
-                        // printf("moved from %s\n", moved_from);
-                        // printf("moved to %s\n", moved_to);
-                        // printf("storage rename\n");
-                        // fflush(stdout);
-                        storage_rename(moved_from, moved_to);
-                        free(moved_to);
-                        // storage_print();
-                        // printf("done storage rename\n");
-                        // fflush(stdout);
-                        // printf("new full path %s\n", fpath);
-                        // full_path()
-                        // storage_rename();
-                        // moved_from->fpath=
-                    } else {
-                        printf("name %s\n", event->name);
-                        printf("moved outside\n");
-                        // printf()
-                        // moved outside of watched area
-                        // remove watches
-                        // remove_watch(event->wd);
-                    }
-                    free(moved_from);
-                    moved_from = NULL;
-                }
+            adjust_watchers(event);
+            // printf("iterate\n");
+        }
 
-                if ((event->mask & IN_CREATE)) {
-                    ListNode *node = storage_find(event->wd);
-                    char *full_path;
-                    // TODO asprintf is said to be slow
-                    // https://news.ycombinator.com/item?id=3112700
-                    // maybe use something else
-                    asprintf(&full_path, "%s/%s", node->fpath, event->name);
-                    // printf("FULLPATH%s\n", path);
-                    // const char* new_file = asprintf
-                    // printf("NEW_DIR in %s\n", node->fpath);
-                    // printf("NAME: %s\n", event->name);
-                    watch_recursively(full_path);
-                    free(full_path);
-                }
-                // else if (event->mask & IN_MOVED_FROM) {
-                // fprintf(stdout, "RMOEV WATCH\n");
-                // // TODO don't remove watch if MOVED_TO occurs inside
-                // folder remove_watch(event->wd);
-                // }
-                if (event->mask & IN_MOVED_FROM) {
-                    full_path(&moved_from, event);
-                    // printf("MOVED from, from%s %d\n", moved_from->fpath,
-                    //        event->wd);
-                    // printf("%s\n", event->name);
-                    // moved_from=from
-                }
-
-                // else if (event->mask & IN_MOVED_TO) {
-                //     printf("MOVED TO, from%s %d\n", moved_from->fpath,
-                //            event->wd);
-                //     printf("%s\n", event->name);
-                //     // storage_print();
-                // }
-            }
+        if (moved_from_event) {
+            // trailing moved_from event
+            // printf("trailing moved_from_event\n");
+            // TODO don't remove event.wd remove wd from child
+            // use (storage_find_by_path)
+            char *fpath;
+            full_path(&fpath, moved_from_event);
+            // printf("%s\n", fpath);
+            remove_watch_by_path(fpath);
+            // printf("before free\n");
+            free(fpath);
+            moved_from_event = NULL;
+            // printf("done\n");
         }
     }
+
+    // printf("end of loop");
     // TODO free moved from if it is not null
     fflush(stdout);
 }
