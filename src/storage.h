@@ -12,6 +12,8 @@ ListNode *storage_find(int wd);
 
 void storage_remove_by_wd(int wd);
 
+void storage_remove_by_path(const char* fpath);
+
 int storage_find_by_path(const char* fpath);
 
 void storage_rename(const char* oldPath, const char* newPath);

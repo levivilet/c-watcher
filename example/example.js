@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import { mkdir, mkdtemp, rename, writeFile } from "fs/promises";
+import { mkdir, mkdtemp, rename, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { setTimeout } from "timers/promises";
@@ -45,13 +45,12 @@ const createWatcher = async (args = [], options = {}) => {
 
 const main = async () => {
   const tmpDir = await getTmpDir();
-  await mkdir(`${tmpDir}/1/2/3/4/5`, { recursive: true });
+  await mkdir(`${tmpDir}/1`);
   const watcher = await createWatcher([tmpDir]);
-  await rename(`${tmpDir}/1/2/3/4/5`, `${tmpDir}/1/6`);
-  await rename(`${tmpDir}/1/2/3`, `${tmpDir}/1/6/3`);
-  await writeFile(`${tmpDir}/1/6/d.txt`, "");
+  await rm(`${tmpDir}/1`, { recursive: true });
+  await writeFile(`${tmpDir}/1`, "");
 
-  await setTimeout(160);
+  await setTimeout(250);
   console.log(watcher.stdout);
   // await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
   // await writeFile(`${tmpDir}/old/abc.txt`, "");

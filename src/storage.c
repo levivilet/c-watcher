@@ -34,6 +34,7 @@ void storage_print() {
         current = current->next;
     }
     printf("\n");
+    printf("storage print done\n");
 }
 
 void storage_add(int wd, const char *fpath) {
@@ -89,7 +90,31 @@ void storage_remove_by_wd(int wd) {
     ListNode *node = head;
     while (node != NULL) {
         if (node->wd == wd) {
-            prev->next = node->next;
+            if (node == head) {
+                head = node->next;
+            } else {
+                prev->next = node->next;
+            }
+            free(node);
+            return;
+        }
+        prev = node;
+        node = node->next;
+    }
+    fprintf(stderr, "node is NULL, extremely unlucky user");
+    exit(EXIT_FAILURE);
+}
+
+void storage_remove_by_path(const char *fpath) {
+    ListNode *prev = head;
+    ListNode *node = head;
+    while (node != NULL) {
+        if (strcmp(node->fpath, fpath) == 0) {
+            if (node == head) {
+                head = node->next;
+            } else {
+                prev->next = node->next;
+            }
             free(node);
             return;
         }

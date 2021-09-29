@@ -39,7 +39,8 @@ static void remove_watch_by_path(const char *fpath) {
     // printf("rm by path %s\n", fpath);
     // storage_print();
     int wd = storage_find_by_path(fpath);
-    // printf("got wd%d\n", wd);
+    // wd = 2;
+    // printf("got wd to remove %d\n", wd);
     notify_remove_watch(wd);
     // storage_print();
 }
@@ -68,11 +69,31 @@ static void watch_recursively(const char *dir) {
 
 static void event_print(const struct inotify_event *event) {
     printf("\n");
-    printf("event:\n");
+    printf("Event\n");
     if (event->len) {
-        printf("path: %s\n", event->name);
+        printf("path %s\n", event->name);
     }
-    printf("wd: %d", event->wd);
+    printf("wd %d\n", event->wd);
+    if (event->mask & IN_OPEN) printf("type OPEN\n");
+    if (event->mask & IN_CLOSE_NOWRITE) printf("type CLOSE_NOWRITE\n");
+    if (event->mask & IN_CLOSE_WRITE) printf("type CLOSE_WRITE\n");
+    if (event->mask & IN_ACCESS) printf("type ACCESS\n");
+    if (event->mask & IN_MODIFY) printf("type MODIFY\n");
+    if (event->mask & IN_ATTRIB) printf("type ATTRIB\n");
+    if (event->mask & IN_OPEN) printf("type OPEN\n");
+    if (event->mask & IN_CREATE) printf("type CREATE\n");
+    if (event->mask & IN_DELETE) printf("type DELETE\n");
+    if (event->mask & IN_DELETE_SELF) printf("type DELETE_SELF\n");
+    if (event->mask & IN_ISDIR) printf("type ISDIR\n");
+    // if (event->mask & IN_ISDIR) printf("type IN_ISDIR\n");
+    if (event->mask & IN_MOVED_FROM) printf("type MOVED_FROM\n");
+    if (event->mask & IN_MOVED_TO) printf("type MOVED_TO\n");
+    if (event->mask & IN_MOVE) printf("type MOVE\n");
+    // if (event->mask & IN_MODIFY) printf("type MODIFY\n");
+    // if (event->mask & IN_DELETE_SELF) printf("type DELETESELF\n");
+    if (event->mask & IN_MOVE_SELF) printf("type MOVE_SELF\n");
+    if (event->mask & IN_ACCESS) printf("type ACCESS\n");
+    if (event->mask & IN_IGNORED) printf("type IGNORED\n");
     printf("\n");
 }
 
@@ -80,7 +101,10 @@ static void output_event(const struct inotify_event *event) {
     if (event->mask & IN_IGNORED) {
         return;
     }
+    // printf("before\n");
     // event_print(event);
+    // printf("after\n");
+    // storage_print();
     // storage_print();
     // printf("EVENT\n");
 
@@ -160,9 +184,9 @@ static void adjust_watchers(const struct inotify_event *event) {
         // moved outside -> remove watch
         char *fpath;
         full_path(&fpath, event);
-        printf("event %s\n", event->name);
+        // printf("event %s\n", event->name);
         // storage_print();
-        printf("fpath: %s\n", fpath);
+        // printf("fpath: %s\n", fpath);
         // printf("remove watch\n");
         // TODO remove by path?
         notify_remove_watch(moved_from_event->wd);
@@ -181,6 +205,9 @@ static void adjust_watchers(const struct inotify_event *event) {
         watch_recursively(fpath);
         free(fpath);
     }
+    // if(event->mask & IN_DELETE){
+
+    // }
     if (event->mask & IN_MOVED_FROM) {
         // printf("MOVED_FROM\n");
         moved_from_event = event;
@@ -190,8 +217,19 @@ static void adjust_watchers(const struct inotify_event *event) {
     }
     if (event->mask & IN_IGNORED) {
         // folder has been ignored -> remove from storage
+        // printf("!!!IGNORED!!! %d\n", event->wd);
         storage_remove_by_wd(event->wd);
     }
+    // if (event->mask & IN_DELETE) {
+    //     printf("delete %d\n", event->wd);
+    //     char *fpath;
+    //     full_path(&fpath, event);
+    //     // storage_print();
+    //     // storage_remove_by_path(fpath);
+    //     storage_print();
+    //     free(fpath);
+    //     printf("free\n");
+    // }
 }
 
 /* Read all available inotify events from the file descriptor 'fd'.

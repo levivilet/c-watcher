@@ -1007,6 +1007,35 @@ ${tmpDir}/2/a.txt CLOSE_WRITE
   watcher.dispose();
 });
 
+test("replace file with folder", async () => {
+  const tmpDir = await getTmpDir();
+  await writeFile(`${tmpDir}/1`, "");
+  const watcher = await createWatcher([tmpDir]);
+  await rm(`${tmpDir}/1`);
+  await mkdir(`${tmpDir}/1`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 DELETE
+${tmpDir}/1 CREATEISDIR
+`);
+  });
+  watcher.dispose();
+});
+
+test("replace folder with file", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  const watcher = await createWatcher([tmpDir]);
+  await rm(`${tmpDir}/1`, { recursive: true });
+  await writeFile(`${tmpDir}/1`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 DELETEISDIR
+${tmpDir}/1 CREATE
+${tmpDir}/1 CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
 // TODO test move in folder then create folder inside that folder, remove outer folder and create file in inner folder
 
 // TODO test remove lowest wd
