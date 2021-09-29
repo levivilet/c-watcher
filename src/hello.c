@@ -67,36 +67,6 @@ static void watch_recursively(const char *dir) {
     }
 }
 
-static void event_print(const struct inotify_event *event) {
-    printf("\n");
-    printf("Event\n");
-    if (event->len) {
-        printf("path %s\n", event->name);
-    }
-    printf("wd %d\n", event->wd);
-    if (event->mask & IN_OPEN) printf("type OPEN\n");
-    if (event->mask & IN_CLOSE_NOWRITE) printf("type CLOSE_NOWRITE\n");
-    if (event->mask & IN_CLOSE_WRITE) printf("type CLOSE_WRITE\n");
-    if (event->mask & IN_ACCESS) printf("type ACCESS\n");
-    if (event->mask & IN_MODIFY) printf("type MODIFY\n");
-    if (event->mask & IN_ATTRIB) printf("type ATTRIB\n");
-    if (event->mask & IN_OPEN) printf("type OPEN\n");
-    if (event->mask & IN_CREATE) printf("type CREATE\n");
-    if (event->mask & IN_DELETE) printf("type DELETE\n");
-    if (event->mask & IN_DELETE_SELF) printf("type DELETE_SELF\n");
-    if (event->mask & IN_ISDIR) printf("type ISDIR\n");
-    // if (event->mask & IN_ISDIR) printf("type IN_ISDIR\n");
-    if (event->mask & IN_MOVED_FROM) printf("type MOVED_FROM\n");
-    if (event->mask & IN_MOVED_TO) printf("type MOVED_TO\n");
-    if (event->mask & IN_MOVE) printf("type MOVE\n");
-    // if (event->mask & IN_MODIFY) printf("type MODIFY\n");
-    // if (event->mask & IN_DELETE_SELF) printf("type DELETESELF\n");
-    if (event->mask & IN_MOVE_SELF) printf("type MOVE_SELF\n");
-    if (event->mask & IN_ACCESS) printf("type ACCESS\n");
-    if (event->mask & IN_IGNORED) printf("type IGNORED\n");
-    printf("\n");
-}
-
 static void output_event(const struct inotify_event *event) {
     if (event->mask & IN_IGNORED) {
         return;
@@ -150,10 +120,11 @@ static void output_event(const struct inotify_event *event) {
 static void adjust_watchers(const struct inotify_event *event) {
     // printf("EVENT LENGTH %d\n", event->len);
     // printf("EVENT NAME %s\n", event->name);
-    if (!event->mask & IN_ISDIR) {
+    if (!(event->mask & IN_ISDIR)) {
         return;
     }
     if (moved_from_event) {
+        // printf("HAS MOVED FROM EVENT\n");
         // TODO check cookie
         if (event->mask & IN_MOVED_TO) {
             // matching event -> rename
@@ -182,15 +153,20 @@ static void adjust_watchers(const struct inotify_event *event) {
             return;
         }
         // moved outside -> remove watch
+        // printf("IS DIR %d", event->mask & IN_ISDIR);
         char *fpath;
         full_path(&fpath, event);
         // printf("event %s\n", event->name);
         // storage_print();
         // printf("fpath: %s\n", fpath);
-        // printf("remove watch\n");
-        // TODO remove by path?
-        notify_remove_watch(moved_from_event->wd);
-        moved_from_event = NULL;
+        // printf("remove watch %d\n", event->wd);
+        remove_watch_by_path(fpath);
+        free(fpath);
+        if (event->mask & IN_MOVED_FROM) {
+            moved_from_event = event;
+        } else {
+            moved_from_event = NULL;
+        }
         return;
     }
     // printf("below\n");
@@ -209,7 +185,7 @@ static void adjust_watchers(const struct inotify_event *event) {
 
     // }
     if (event->mask & IN_MOVED_FROM) {
-        // printf("MOVED_FROM\n");
+        // printf("SET MOVED_FROM EVENT\n");
         moved_from_event = event;
         // printf("MOVED from, from%s %d\n", moved_from->fpath,
         //        event->wd);
@@ -271,6 +247,7 @@ static void handle_events(int fd) {
         for (char *ptr = buf; ptr < buf + len;
              ptr += sizeof(struct inotify_event) + event->len) {
             event = (const struct inotify_event *)ptr;
+            // notify_print_event(event);
             output_event(event);
             adjust_watchers(event);
             // printf("iterate\n");

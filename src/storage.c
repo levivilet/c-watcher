@@ -135,6 +135,7 @@ int storage_find_by_path(const char *fpath) {
         }
         node = node->next;
     }
+    printf("err: not found");
     fprintf(stderr, "node is NULL, extremely unlucky user");
     exit(EXIT_FAILURE);
     return -1;

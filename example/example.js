@@ -45,10 +45,16 @@ const createWatcher = async (args = [], options = {}) => {
 
 const main = async () => {
   const tmpDir = await getTmpDir();
-  await mkdir(`${tmpDir}/1`);
-  const watcher = await createWatcher([tmpDir]);
-  await rm(`${tmpDir}/1`, { recursive: true });
+  const tmpDir2 = await getTmpDir();
   await writeFile(`${tmpDir}/1`, "");
+  await writeFile(`${tmpDir}/2`, "");
+  await writeFile(`${tmpDir}/3`, "");
+  const watcher = await createWatcher([tmpDir]);
+  await Promise.all([
+    rename(`${tmpDir}/1`, `${tmpDir2}/1`),
+    rename(`${tmpDir}/2`, `${tmpDir2}/2`),
+    rename(`${tmpDir}/3`, `${tmpDir2}/3`),
+  ]);
 
   await setTimeout(250);
   console.log(watcher.stdout);

@@ -806,6 +806,7 @@ test("rename subtree", async () => {
     expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5 ISDIRMOVED_FROMMOVE
 ${tmpDir}/1/5 ISDIRMOVED_TOMOVE
 ${tmpDir}/1/5/a.txt CREATE
+${tmpDir}/1/5/a.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -1036,6 +1037,84 @@ ${tmpDir}/1 CLOSE_WRITE
   watcher.dispose();
 });
 
+test("create multiple files in parallel", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  await Promise.all([
+    writeFile(`${tmpDir}/1`, ""),
+    writeFile(`${tmpDir}/2`, ""),
+    writeFile(`${tmpDir}/3`, ""),
+  ]);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toContain(`${tmpDir}/1 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3 CLOSE_WRITE`);
+  });
+  watcher.dispose();
+});
+
+test("remove multiple files in parallel", async () => {
+  const tmpDir = await getTmpDir();
+  await Promise.all([
+    writeFile(`${tmpDir}/1`, ""),
+    writeFile(`${tmpDir}/2`, ""),
+    writeFile(`${tmpDir}/3`, ""),
+  ]);
+  const watcher = await createWatcher([tmpDir]);
+  await Promise.all([rm(`${tmpDir}/1`), rm(`${tmpDir}/2`), rm(`${tmpDir}/3`)]);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toContain(`${tmpDir}/1 DELETE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2 DELETE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3 DELETE`);
+  });
+  watcher.dispose();
+});
+
+// TODO test move out multiple files while moving in multiple files
+
+test("move out multiple files in parallel", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await writeFile(`${tmpDir}/1`, "");
+  await writeFile(`${tmpDir}/2`, "");
+  await writeFile(`${tmpDir}/3`, "");
+  const watcher = await createWatcher([tmpDir]);
+  await Promise.all([
+    rename(`${tmpDir}/1`, `${tmpDir2}/1`),
+    rename(`${tmpDir}/2`, `${tmpDir2}/2`),
+    rename(`${tmpDir}/3`, `${tmpDir2}/3`),
+  ]);
+  // await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 MOVED_FROMMOVE
+${tmpDir}/2 MOVED_FROMMOVE
+${tmpDir}/3 MOVED_FROMMOVE
+`);
+  });
+  watcher.dispose();
+});
+
+// TODO
+test.skip("move out multiple files and folders", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  await mkdir(`${tmpDir}/2`);
+  await writeFile(`${tmpDir}/2/3.txt`, "");
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
+  await rename(`${tmpDir}/2/3.txt`, `${tmpDir2}/3.txt`);
+  await rename(`${tmpDir}/2`, `${tmpDir2}/2`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`
+`);
+  });
+  watcher.dispose();
+});
+
 // TODO test move in folder then create folder inside that folder, remove outer folder and create file in inner folder
 
 // TODO test remove lowest wd
@@ -1051,3 +1130,18 @@ ${tmpDir}/1 CLOSE_WRITE
 // await setTimeout(100);
 // await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
 // await writeFile(`${tmpDir}/old/abc.txt`, "");
+
+// TODO misc test
+// const tmpDir = await getTmpDir();
+// const tmpDir2 = await getTmpDir();
+// const n = 100;
+// for (let i = 0; i < n; i++) {
+//   await mkdir(`${tmpDir}/${i}`);
+// }
+// // await mkdir(`${tmpDir}/2`);
+// const watcher = await createWatcher([tmpDir]);
+// for (let i = 0; i < n; i++) {
+//   await rename(`${tmpDir}/${i}`, `${tmpDir2}/${i}`);
+//   await writeFile(`${tmpDir}/${i}.txt`, "");
+//   // await mkdir(`${tmpDir}/${i}`);
+// }

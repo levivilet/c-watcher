@@ -48,3 +48,33 @@ void notify_remove_watch(int wd) {
         exit(EXIT_FAILURE);
     }
 }
+
+void notify_print_event(const struct inotify_event *event) {
+    printf("\n");
+    printf("Event\n");
+    if (event->len) {
+        printf("path %s\n", event->name);
+    }
+    printf("wd %d\n", event->wd);
+    if (event->mask & IN_OPEN) printf("type OPEN\n");
+    if (event->mask & IN_CLOSE_NOWRITE) printf("type CLOSE_NOWRITE\n");
+    if (event->mask & IN_CLOSE_WRITE) printf("type CLOSE_WRITE\n");
+    if (event->mask & IN_ACCESS) printf("type ACCESS\n");
+    if (event->mask & IN_MODIFY) printf("type MODIFY\n");
+    if (event->mask & IN_ATTRIB) printf("type ATTRIB\n");
+    if (event->mask & IN_OPEN) printf("type OPEN\n");
+    if (event->mask & IN_CREATE) printf("type CREATE\n");
+    if (event->mask & IN_DELETE) printf("type DELETE\n");
+    if (event->mask & IN_DELETE_SELF) printf("type DELETE_SELF\n");
+    if (event->mask & IN_ISDIR) printf("type ISDIR\n");
+    // if (event->mask & IN_ISDIR) printf("type IN_ISDIR\n");
+    if (event->mask & IN_MOVED_FROM) printf("type MOVED_FROM\n");
+    if (event->mask & IN_MOVED_TO) printf("type MOVED_TO\n");
+    if (event->mask & IN_MOVE) printf("type MOVE\n");
+    // if (event->mask & IN_MODIFY) printf("type MODIFY\n");
+    // if (event->mask & IN_DELETE_SELF) printf("type DELETESELF\n");
+    if (event->mask & IN_MOVE_SELF) printf("type MOVE_SELF\n");
+    if (event->mask & IN_ACCESS) printf("type ACCESS\n");
+    if (event->mask & IN_IGNORED) printf("type IGNORED\n");
+    printf("\n");
+}
