@@ -987,6 +987,26 @@ ${tmpDir}/2/3/4 ISDIRMOVED_TOMOVE
   watcher.dispose();
 });
 
+test("move out child folder, remove parent folder, move child folder back in", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/1/2`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1/2`, `${tmpDir2}/2`);
+  await rm(`${tmpDir}/1`, { recursive: true });
+  await rename(`${tmpDir2}/2`, `${tmpDir}/2`);
+  await writeFile(`${tmpDir}/2/a.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2 ISDIRMOVED_FROMMOVE
+${tmpDir}/1 DELETEISDIR
+${tmpDir}/2 ISDIRMOVED_TOMOVE
+${tmpDir}/2/a.txt CREATE
+${tmpDir}/2/a.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
 // TODO test move in folder then create folder inside that folder, remove outer folder and create file in inner folder
 
 // TODO test remove lowest wd
