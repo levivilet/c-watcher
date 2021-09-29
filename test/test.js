@@ -841,9 +841,40 @@ ${tmpDir}/2 ISDIRMOVED_TOMOVE
 
 // TODO test no memory leak when final event is moved_from
 
-// TODO test rename short path to long path
+test("rename short path to long path", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(
+    `${tmpDir}/1`,
+    `${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222`
+  );
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222 ISDIRMOVED_TOMOVE
+`);
+  });
+  watcher.dispose();
+});
 
-// TODO test rename long path to short path
+test("rename long path to short path", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(
+    `${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222`
+  );
+  const watcher = await createWatcher([tmpDir]);
+  await rename(
+    `${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222`,
+    `${tmpDir}/1`
+  );
+  await waitForExpect(() => {
+    expect(watcher.stdout)
+      .toBe(`${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222 ISDIRMOVED_FROMMOVE
+${tmpDir}/1 ISDIRMOVED_TOMOVE
+`);
+  });
+  watcher.dispose();
+});
 
 // TODO test moved_from and separate moved_to
 
@@ -851,9 +882,62 @@ ${tmpDir}/2 ISDIRMOVED_TOMOVE
 
 // TODO test moved_from file and moved_to folder
 
-// TODO test renaming folders from top 1/1/1 -> -> 2/1/1 -> 2/3/1 -> 2/3/4
-// TODO test renaming folders from bottom 1/1/1 -> 1/1/4 -> 1/3/4 -> 2/3/4
-// TODO test renaming folders from middle 1/1/1 -> 1/3/1 -> 2/3/1 -> 2/3/4
+test("renaming folders from top 1/1/1 -> -> 2/1/1 -> 2/3/1 -> 2/3/4", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1/1/1`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  await rename(`${tmpDir}/2/1`, `${tmpDir}/2/3`);
+  await rename(`${tmpDir}/2/3/1`, `${tmpDir}/2/3/4`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2 ISDIRMOVED_TOMOVE
+${tmpDir}/2/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2/3 ISDIRMOVED_TOMOVE
+${tmpDir}/2/3/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2/3/4 ISDIRMOVED_TOMOVE
+`);
+  });
+  watcher.dispose();
+});
+
+test("renaming folders from bottom 1/1/1 -> 1/1/4 -> 1/3/4 -> 2/3/4", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1/1/1`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1/1/1`, `${tmpDir}/1/1/4`);
+  await rename(`${tmpDir}/1/1`, `${tmpDir}/1/3`);
+  await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1/1/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/1/1/4 ISDIRMOVED_TOMOVE
+${tmpDir}/1/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/1/3 ISDIRMOVED_TOMOVE
+${tmpDir}/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2 ISDIRMOVED_TOMOVE
+`);
+  });
+  watcher.dispose();
+});
+
+test("renaming folders from middle 1/1/1 -> 1/3/1 -> 2/3/1 -> 2/3/4", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1/1/1`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1/1`, `${tmpDir}/1/3`);
+  await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  await rename(`${tmpDir}/2/3/1`, `${tmpDir}/2/3/4`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/1/3 ISDIRMOVED_TOMOVE
+${tmpDir}/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2 ISDIRMOVED_TOMOVE
+${tmpDir}/2/3/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2/3/4 ISDIRMOVED_TOMOVE
+`);
+  });
+  watcher.dispose();
+});
 
 // TODO test move in folder then create folder inside that folder, remove outer folder and create file in inner folder
 
