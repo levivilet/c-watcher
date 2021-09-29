@@ -770,13 +770,70 @@ ${tmpDir}/2 ISDIRMOVED_TOMOVE
 // const watcher = await createWatcher([tmpDir]);
 // await rename(`${tmpDir}/1/a.txt`, `${tmpDir}/2/b.txt`);
 
-// TODO test move out and move
+test("move out and move folder", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  await mkdir(`${tmpDir2}/2`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
+  await rename(`${tmpDir2}/1`, `${tmpDir2}/2`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
+`);
+  });
+  watcher.dispose();
+});
 
-// TODO test move and move out
+test("move and move out folder", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  await mkdir(`${tmpDir2}/2`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  await rename(`${tmpDir}/2`, `${tmpDir2}/2`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2 ISDIRMOVED_TOMOVE
+${tmpDir}/2 ISDIRMOVED_FROMMOVE
+`);
+  });
+  watcher.dispose();
+});
 
-// TODO test move and move in
+test("move and move in folder", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  await mkdir(`${tmpDir2}/3`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  await rename(`${tmpDir2}/3`, `${tmpDir}/3`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2 ISDIRMOVED_TOMOVE
+${tmpDir}/3 ISDIRMOVED_TOMOVE
+`);
+  });
+  watcher.dispose();
+});
 
-// TODO test move in and move
+test("move in and move folder", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir2}/1`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
+  await rename(`${tmpDir}/1`, `${tmpDir}/2`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_TOMOVE
+${tmpDir}/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2 ISDIRMOVED_TOMOVE
+`);
+  });
+  watcher.dispose();
+});
 
 // TODO test multiple fast renames
 
