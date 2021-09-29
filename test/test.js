@@ -19,7 +19,6 @@ const exec = async (file, args) => {
 };
 
 waitForExpect.defaults.timeout = 75;
-waitForExpect.defaults.interval = 30;
 
 const getTmpDir = () => {
   return mkdtemp(join(tmpdir(), "foo-"));
