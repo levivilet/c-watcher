@@ -552,24 +552,6 @@ ${tmpDir}/old/abc.txt CLOSE_WRITE
   watcher.dispose();
 });
 
-test("misc - move folder in and out multiple times (fast)", async () => {
-  const tmpDir = await getTmpDir();
-  const tmpDir2 = await getTmpDir();
-  await mkdir(`${tmpDir}/old`);
-  const watcher = await createWatcher([tmpDir]);
-  await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
-  await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
-  await writeFile(`${tmpDir}/old/abc.txt`, "");
-  await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
-${tmpDir}/old ISDIRMOVED_TOMOVE
-${tmpDir}/old/abc.txt CREATE
-${tmpDir}/old/abc.txt CLOSE_WRITE
-`);
-  });
-  watcher.dispose();
-});
-
 test("misc - deeply nested folder", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
