@@ -65,6 +65,10 @@ static void watch_recursively(const char *dir) {
     // TODO tweak amount of descriptors to tweak performance
     int descriptors = 255;
     if (nftw(dir, visit_dirent, descriptors, flags) == -1) {
+        if (errno == ENOENT) {
+            // folder might have already been removed
+            return;
+        }
         printf("nftw error");
         fflush(stdout);
         if (errno == EMFILE) {
@@ -78,6 +82,9 @@ static void watch_recursively(const char *dir) {
         } else if (errno == ELOOP) {
             printf("loop");
         } else if (errno == EACCES) {
+            printf("access");
+        } else if (errno == ENOENT) {
+            printf("enoent");
         } else {
             printf("something else");
         }

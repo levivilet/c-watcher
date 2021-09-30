@@ -21,16 +21,14 @@ const getTmpDir = () => {
  * @param {import('child_process').SpawnOptions} options
  * @returns
  */
-export const createWatcher = async (args = [], options = {}) => {
+const createWatcher = async (args = [], options = {}) => {
   const child = spawn("./hello", args, options);
-  const stream = createWriteStream("./out.txt");
+  let result = "";
   child.stdout.on("data", (data) => {
-    stream.write(data);
+    result += data.toString();
   });
-
   await new Promise((resolve) => {
     const handleData = (data) => {
-      console.log(data.toString());
       if (data.toString().includes("Watches established.")) {
         child.stderr.off("data", handleData);
         resolve();
@@ -39,67 +37,30 @@ export const createWatcher = async (args = [], options = {}) => {
     child.stderr.on("data", handleData);
   });
 
-  child.on("error", (error) => {
-    console.error(error);
-    process.exit(1);
-  });
-  child.on("disconnect", (code) => {
-    console.info("disconnect", code);
-  });
-  child.on("exit", (code) => {
-    console.info("child exit", code);
-    // console.log(result);
-  });
   return {
+    get stdout() {
+      return result;
+    },
     dispose() {
       child.kill();
     },
-    get pid() {
-      return child.pid;
+    clear() {
+      result = "";
     },
   };
 };
 
 const main = async () => {
   const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/old`);
   const watcher = await createWatcher([tmpDir]);
-  const initialStats = await getStats(watcher.pid);
-  for (let i = 0; i < 5_000; i++) {
-    await mkdir(`${tmpDir}/1-${i}`);
-  }
-  const middleStats1 = await getStats(watcher.pid);
-  for (let i = 0; i < 5_000; i++) {
-    await rm(`${tmpDir}/1-${i}`, { recursive: true });
-  }
-  for (let i = 0; i < 5_000; i++) {
-    await mkdir(`${tmpDir}/2-${i}`);
-  }
-  const middleStats2 = await getStats(watcher.pid);
-  for (let i = 0; i < 5_000; i++) {
-    await rm(`${tmpDir}/2-${i}`, { recursive: true });
-  }
-  for (let i = 0; i < 5_000; i++) {
-    await mkdir(`${tmpDir}/3-${i}`);
-  }
-  const middleStats3 = await getStats(watcher.pid);
-  for (let i = 0; i < 5_000; i++) {
-    await rm(`${tmpDir}/3-${i}`, { recursive: true });
-  }
-  for (let i = 0; i < 5_000; i++) {
-    await mkdir(`${tmpDir}/4-${i}`);
-  }
-  const middleStats4 = await getStats(watcher.pid);
-  for (let i = 0; i < 5_000; i++) {
-    await rm(`${tmpDir}/4-${i}`, { recursive: true });
-  }
-  await setTimeout(1000);
-  const finalStats = await getStats(watcher.pid);
-  console.info(`memory before: ${initialStats.memory}`);
-  console.info(`memory middle 1: ${middleStats1.memory}`);
-  console.info(`memory middle 2: ${middleStats2.memory}`);
-  console.info(`memory middle 3: ${middleStats3.memory}`);
-  console.info(`memory middle 4: ${middleStats4.memory}`);
-  console.info(`memory after: ${finalStats.memory}`);
+  await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
+  await setTimeout(100);
+  await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
+  await setTimeout(100);
+  await writeFile(`${tmpDir}/old/abc.txt`, "");
+  console.log(watcher.stdout);
 };
 
 main();
