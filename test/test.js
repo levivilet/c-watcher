@@ -309,13 +309,27 @@ ${tmpDir}/は CLOSE_WRITE
   watcher.dispose();
 });
 
-test("misc - file with emoji", async () => {
+test("file with emoji", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/🗺️`, "");
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/🗺️ CREATE
 ${tmpDir}/🗺️ CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("folder with greek letters", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  await mkdir(`${tmpDir}/Σ Τ Υ Φ Χ Ψ`);
+  await writeFile(`${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/Σ Τ Υ Φ Χ Ψ CREATEISDIR
+${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt CREATE
+${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
