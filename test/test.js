@@ -512,7 +512,7 @@ test("move out folder, then create file in that folder", async () => {
   watcher.dispose();
 });
 
-test("misc - move folder in and out multiple times", async () => {
+test("move folder in and out multiple times", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir}/old`);
@@ -522,12 +522,16 @@ test("misc - move folder in and out multiple times", async () => {
     expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
 `);
   });
+  watcher.clear();
   await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_TOMOVE
+`);
+  });
+  watcher.clear();
   await writeFile(`${tmpDir}/old/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
-${tmpDir}/old ISDIRMOVED_TOMOVE
-${tmpDir}/old/abc.txt CREATE
+    expect(watcher.stdout).toBe(`${tmpDir}/old/abc.txt CREATE
 ${tmpDir}/old/abc.txt CLOSE_WRITE
 `);
   });
