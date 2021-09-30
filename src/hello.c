@@ -20,6 +20,8 @@ const struct inotify_event *moved_from_event = NULL;
 void full_path(char **fpath, const struct inotify_event *event) {
     ListNode *node = storage_find(event->wd);
     if (asprintf(fpath, "%s/%s", node->fpath, event->name) == -1) {
+        printf("asprintf error");
+        fflush(stdout);
         perror("asprintf");
         exit(EXIT_FAILURE);
     }
@@ -52,6 +54,7 @@ static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
     if (tflag == FTW_D) {
         add_watch(fpath);
     }
+    // free(fpath);
 
     return 0; /* To tell nftw() to continue */
 }
@@ -62,6 +65,27 @@ static void watch_recursively(const char *dir) {
     // TODO tweak amount of descriptors to tweak performance
     int descriptors = 255;
     if (nftw(dir, visit_dirent, descriptors, flags) == -1) {
+        printf("nftw error");
+        fflush(stdout);
+        if (errno == EMFILE) {
+            printf("em file");
+        } else if (errno == ENFILE) {
+            printf("nfile");
+        } else if (errno == EOVERFLOW) {
+            printf("overflow");
+        } else if (errno == ENOTDIR) {
+            printf("not dir");
+        } else if (errno == ELOOP) {
+            printf("loop");
+        } else if (errno == EACCES) {
+        } else {
+            printf("something else");
+        }
+        // printf()
+        // printf("errno addr %d\n", errno);
+        // fflush(stdout);
+        // printf("errno %s\n", strerror(errno));
+        fflush(stdout);
         perror("nftw");
         exit(EXIT_FAILURE);
     }
@@ -120,7 +144,14 @@ static void output_event(const struct inotify_event *event) {
 static void adjust_watchers(const struct inotify_event *event) {
     // printf("EVENT LENGTH %d\n", event->len);
     // printf("EVENT NAME %s\n", event->name);
+
     if (!(event->mask & IN_ISDIR)) {
+        if (event->mask & IN_IGNORED) {
+            // folder has been ignored -> remove from storage
+            // printf("!!!IGNORED!!! %d\n", event->wd);
+            storage_remove_by_wd(event->wd);
+            return;
+        }
         return;
     }
     if (moved_from_event) {
@@ -172,9 +203,9 @@ static void adjust_watchers(const struct inotify_event *event) {
     // printf("below\n");
     if ((event->mask & IN_CREATE) || event->mask & IN_MOVED_TO) {
         // new folder -> add watcher
-        // printf("ADD WATCHER\n");
         char *fpath;
         full_path(&fpath, event);
+        // printf("ADD WATCHER %s\n", fpath);
         // printf("FULLPATH%s\n", path);
         // printf("NEW_DIR in %s\n", node->fpath);
         // printf("NAME: %s\n", event->name);
@@ -191,17 +222,12 @@ static void adjust_watchers(const struct inotify_event *event) {
         //        event->wd);
         // printf("%s\n", event->name);
     }
-    if (event->mask & IN_IGNORED) {
-        // folder has been ignored -> remove from storage
-        // printf("!!!IGNORED!!! %d\n", event->wd);
-        storage_remove_by_wd(event->wd);
-    }
+
     // if (event->mask & IN_DELETE) {
     //     printf("delete %d\n", event->wd);
     //     char *fpath;
     //     full_path(&fpath, event);
     //     // storage_print();
-    //     // storage_remove_by_path(fpath);
     //     storage_print();
     //     free(fpath);
     //     printf("free\n");
@@ -232,6 +258,8 @@ static void handle_events(int fd) {
         len = read(fd, buf, sizeof(buf));
         // printf("LEN: %d\n", len);
         if (len == -1 && errno != EAGAIN) {
+            printf("read error");
+            fflush(stdout);
             perror("read");
             exit(EXIT_FAILURE);
         }
@@ -248,6 +276,7 @@ static void handle_events(int fd) {
              ptr += sizeof(struct inotify_event) + event->len) {
             event = (const struct inotify_event *)ptr;
             // notify_print_event(event);
+            // storage_print_count();`
             output_event(event);
             adjust_watchers(event);
             // printf("iterate\n");
@@ -318,6 +347,8 @@ int main(int argc, char *argv[]) {
         poll_num = poll(fds, nfds, -1);
         if (poll_num == -1) {
             if (errno == EINTR) continue;
+            printf("poll error");
+            fflush(stdout);
             perror("poll");
             exit(EXIT_FAILURE);
         }

@@ -17,9 +17,11 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^27.0.2",
+    "@types/pidusage": "^2.0.1",
     "execa": "^5.1.1",
     "jest": "^27.2.2",
     "nodemon": "^2.0.13",
+    "pidusage": "^2.0.21",
     "wait-for-expect": "^3.0.2"
   }
 }

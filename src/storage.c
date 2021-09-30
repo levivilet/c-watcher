@@ -37,9 +37,19 @@ void storage_print() {
     printf("storage print done\n");
 }
 
+void storage_print_count() {
+    ListNode *current = head;
+    int count = 0;
+    while (current != NULL) {
+        current = current->next;
+        count++;
+    }
+    printf("count: %d\n", count);
+}
+
 void storage_add(int wd, const char *fpath) {
     // printf("storage add %s %d\n", fpath, wd);
-    // storage_print();
+    // storage_print_count();
     ListNode *new_node = (ListNode *)calloc(1, sizeof(ListNode));
     new_node->wd = wd;
     new_node->fpath = strdup(fpath);
@@ -95,34 +105,15 @@ void storage_remove_by_wd(int wd) {
             } else {
                 prev->next = node->next;
             }
+            free(node->fpath);
             free(node);
             return;
         }
         prev = node;
         node = node->next;
     }
-    fprintf(stderr, "node is NULL, extremely unlucky user");
-    exit(EXIT_FAILURE);
-}
-
-void storage_remove_by_path(const char *fpath) {
-    ListNode *prev = head;
-    ListNode *node = head;
-    // TODO two pointer trick can be more efficient and get rid of prev but
-    // that would make the code very confusing
-    while (node != NULL) {
-        if (strcmp(node->fpath, fpath) == 0) {
-            if (node == head) {
-                head = node->next;
-            } else {
-                prev->next = node->next;
-            }
-            free(node);
-            return;
-        }
-        prev = node;
-        node = node->next;
-    }
+    printf("storage remove error");
+    fflush(stdout);
     fprintf(stderr, "node is NULL, extremely unlucky user");
     exit(EXIT_FAILURE);
 }

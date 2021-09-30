@@ -1,10 +1,11 @@
+import { mkdir, rm, writeFile } from "fs/promises";
 import { spawn } from "child_process";
-import { createWriteStream } from "fs";
-import { mkdir, mkdtemp, rename, rm, writeFile } from "fs/promises";
+import { mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import pidusage from "pidusage";
-import { setTimeout } from "timers/promises";
+import { jest } from "@jest/globals";
+import waitForExpect from "wait-for-expect";
 
 const getStats = async (pid) => {
   const stats = await pidusage(pid);
@@ -23,14 +24,8 @@ const getTmpDir = () => {
  */
 export const createWatcher = async (args = [], options = {}) => {
   const child = spawn("./hello", args, options);
-  const stream = createWriteStream("./out.txt");
-  child.stdout.on("data", (data) => {
-    stream.write(data);
-  });
-
   await new Promise((resolve) => {
     const handleData = (data) => {
-      console.log(data.toString());
       if (data.toString().includes("Watches established.")) {
         child.stderr.off("data", handleData);
         resolve();
@@ -38,17 +33,9 @@ export const createWatcher = async (args = [], options = {}) => {
     };
     child.stderr.on("data", handleData);
   });
-
-  child.on("error", (error) => {
-    console.error(error);
-    process.exit(1);
-  });
-  child.on("disconnect", (code) => {
-    console.info("disconnect", code);
-  });
-  child.on("exit", (code) => {
-    console.info("child exit", code);
-    // console.log(result);
+  let eventCount = 0;
+  child.stdout.on("data", (data) => {
+    eventCount += data.toString().split("\n").length - 1;
   });
   return {
     dispose() {
@@ -57,10 +44,28 @@ export const createWatcher = async (args = [], options = {}) => {
     get pid() {
       return child.pid;
     },
+    get eventCount() {
+      return eventCount;
+    },
   };
 };
 
-const main = async () => {
+test("memory should stay the same when adding files", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  const initialStats = await getStats(watcher.pid);
+  for (let i = 0; i < 10_000; i++) {
+    await writeFile(`${tmpDir}/${i}.txt`, "");
+  }
+  await waitForExpect(() => {
+    expect(watcher.eventCount).toBe(20_000);
+  });
+  const finalStats = await getStats(watcher.pid);
+  expect(initialStats.memory).toBe(finalStats.memory);
+  watcher.dispose();
+}, 10_000);
+
+test("memory should not grow when adding and removing folders", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const initialStats = await getStats(watcher.pid);
@@ -71,6 +76,9 @@ const main = async () => {
   for (let i = 0; i < 5_000; i++) {
     await rm(`${tmpDir}/1-${i}`, { recursive: true });
   }
+  await waitForExpect(() => {
+    expect(watcher.eventCount).toBe(10_000);
+  });
   for (let i = 0; i < 5_000; i++) {
     await mkdir(`${tmpDir}/2-${i}`);
   }
@@ -78,6 +86,9 @@ const main = async () => {
   for (let i = 0; i < 5_000; i++) {
     await rm(`${tmpDir}/2-${i}`, { recursive: true });
   }
+  await waitForExpect(() => {
+    expect(watcher.eventCount).toBe(20_000);
+  });
   for (let i = 0; i < 5_000; i++) {
     await mkdir(`${tmpDir}/3-${i}`);
   }
@@ -85,6 +96,9 @@ const main = async () => {
   for (let i = 0; i < 5_000; i++) {
     await rm(`${tmpDir}/3-${i}`, { recursive: true });
   }
+  await waitForExpect(() => {
+    expect(watcher.eventCount).toBe(30_000);
+  });
   for (let i = 0; i < 5_000; i++) {
     await mkdir(`${tmpDir}/4-${i}`);
   }
@@ -92,14 +106,13 @@ const main = async () => {
   for (let i = 0; i < 5_000; i++) {
     await rm(`${tmpDir}/4-${i}`, { recursive: true });
   }
-  await setTimeout(1000);
+  await waitForExpect(() => {
+    expect(watcher.eventCount).toBe(40_000);
+  });
   const finalStats = await getStats(watcher.pid);
-  console.info(`memory before: ${initialStats.memory}`);
-  console.info(`memory middle 1: ${middleStats1.memory}`);
-  console.info(`memory middle 2: ${middleStats2.memory}`);
-  console.info(`memory middle 3: ${middleStats3.memory}`);
-  console.info(`memory middle 4: ${middleStats4.memory}`);
-  console.info(`memory after: ${finalStats.memory}`);
-};
-
-main();
+  expect(middleStats1.memory).toBeGreaterThan(initialStats.memory);
+  expect(middleStats2.memory).toBe(middleStats3.memory);
+  expect(middleStats3.memory).toBe(middleStats4.memory);
+  expect(middleStats4.memory).toBe(finalStats.memory);
+  watcher.dispose();
+}, 20_000);
