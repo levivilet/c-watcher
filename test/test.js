@@ -1075,7 +1075,7 @@ test("remove multiple files in parallel", async () => {
 
 // TODO test move out multiple files while moving in multiple files
 
-test("move out multiple files in parallel", async () => {
+test.skip("move out multiple files in parallel", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await writeFile(`${tmpDir}/1`, "");
@@ -1087,7 +1087,7 @@ test("move out multiple files in parallel", async () => {
     rename(`${tmpDir}/2`, `${tmpDir2}/2`),
     rename(`${tmpDir}/3`, `${tmpDir2}/3`),
   ]);
-  // await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
+  // TODO order not fixed
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/1 MOVED_FROMMOVE
 ${tmpDir}/2 MOVED_FROMMOVE
@@ -1115,6 +1115,216 @@ test.skip("move out multiple files and folders", async () => {
   watcher.dispose();
 });
 
+test.skip("create nine files in one directory", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  await Promise.all([
+    writeFile(`${tmpDir}/0`, ""),
+    writeFile(`${tmpDir}/1`, ""),
+    writeFile(`${tmpDir}/2`, ""),
+    writeFile(`${tmpDir}/3`, ""),
+    writeFile(`${tmpDir}/4`, ""),
+  ]);
+  await Promise.all([
+    writeFile(`${tmpDir}/5`, ""),
+    writeFile(`${tmpDir}/6`, ""),
+  ]);
+  await Promise.all([
+    writeFile(`${tmpDir}/7`, ""),
+    writeFile(`${tmpDir}/8`, ""),
+  ]);
+  await writeFile(`${tmpDir}/9`, "");
+  // TODO order is not fixed
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 CREATE
+${tmpDir}/2 CREATE
+${tmpDir}/3 CREATE
+${tmpDir}/4 CREATE
+${tmpDir}/5 CREATE
+${tmpDir}/6 CREATE
+${tmpDir}/7 CREATE
+${tmpDir}/8 CREATE
+${tmpDir}/9 CREATE
+${tmpDir}/1 CLOSE_WRITE
+${tmpDir}/2 CLOSE_WRITE
+${tmpDir}/3 CLOSE_WRITE
+${tmpDir}/4 CLOSE_WRITE
+${tmpDir}/5 CLOSE_WRITE
+${tmpDir}/6 CLOSE_WRITE
+${tmpDir}/7 CLOSE_WRITE
+${tmpDir}/8 CLOSE_WRITE
+${tmpDir}/9 CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+// TODO
+test("create thirtythree files in nine folders", async () => {
+  const tmpDir = await getTmpDir();
+  const test1Path = `${tmpDir}/add1.txt`;
+  const testb1Path = `${tmpDir}/b/add1.txt`;
+  const testc1Path = `${tmpDir}/c/add1.txt`;
+  const testd1Path = `${tmpDir}/d/add1.txt`;
+  const teste1Path = `${tmpDir}/e/add1.txt`;
+  const testf1Path = `${tmpDir}/f/add1.txt`;
+  const testg1Path = `${tmpDir}/g/add1.txt`;
+  const testh1Path = `${tmpDir}/h/add1.txt`;
+  const testi1Path = `${tmpDir}/i/add1.txt`;
+  const test2Path = `${tmpDir}/add2.txt`;
+  const testb2Path = `${tmpDir}/b/add2.txt`;
+  const testc2Path = `${tmpDir}/c/add2.txt`;
+  const test3Path = `${tmpDir}/add3.txt`;
+  const testb3Path = `${tmpDir}/b/add3.txt`;
+  const testc3Path = `${tmpDir}/c/add3.txt`;
+  const test4Path = `${tmpDir}/add4.txt`;
+  const testb4Path = `${tmpDir}/b/add4.txt`;
+  const testc4Path = `${tmpDir}/c/add4.txt`;
+  const test5Path = `${tmpDir}/add5.txt`;
+  const testb5Path = `${tmpDir}/b/add5.txt`;
+  const testc5Path = `${tmpDir}/c/add5.txt`;
+  const test6Path = `${tmpDir}/add6.txt`;
+  const testb6Path = `${tmpDir}/b/add6.txt`;
+  const testc6Path = `${tmpDir}/c/add6.txt`;
+  const test7Path = `${tmpDir}/add7.txt`;
+  const testb7Path = `${tmpDir}/b/add7.txt`;
+  const testc7Path = `${tmpDir}/c/add7.txt`;
+  const test8Path = `${tmpDir}/add8.txt`;
+  const testb8Path = `${tmpDir}/b/add8.txt`;
+  const testc8Path = `${tmpDir}/c/add8.txt`;
+  const test9Path = `${tmpDir}/add9.txt`;
+  const testb9Path = `${tmpDir}/b/add9.txt`;
+  const testc9Path = `${tmpDir}/c/add9.txt`;
+  await Promise.all([
+    mkdir(`${tmpDir}/b`),
+    mkdir(`${tmpDir}/c`),
+    mkdir(`${tmpDir}/d`),
+    mkdir(`${tmpDir}/e`),
+    mkdir(`${tmpDir}/f`),
+    mkdir(`${tmpDir}/g`),
+    mkdir(`${tmpDir}/h`),
+    mkdir(`${tmpDir}/i`),
+  ]);
+  const watcher = await createWatcher([tmpDir]);
+  await writeFile(test1Path, "");
+  await writeFile(test2Path, "");
+  await writeFile(test3Path, "");
+  await writeFile(test4Path, "");
+  await writeFile(test5Path, "");
+  await writeFile(test6Path, "");
+  await writeFile(test7Path, "");
+  await writeFile(test8Path, "");
+  await writeFile(test9Path, "");
+  await writeFile(testb1Path, "");
+  await writeFile(testb2Path, "");
+  await writeFile(testb3Path, "");
+  await writeFile(testb4Path, "");
+  await writeFile(testb5Path, "");
+  await writeFile(testb6Path, "");
+  await writeFile(testb7Path, "");
+  await writeFile(testb8Path, "");
+  await writeFile(testb9Path, "");
+  await writeFile(testc1Path, "");
+  await writeFile(testc2Path, "");
+  await writeFile(testc3Path, "");
+  await writeFile(testc4Path, "");
+  await writeFile(testc5Path, "");
+  await writeFile(testc6Path, "");
+  await writeFile(testc7Path, "");
+  await writeFile(testc8Path, "");
+  await writeFile(testc9Path, "");
+  await writeFile(testd1Path, "");
+  await writeFile(teste1Path, "");
+  await writeFile(testf1Path, "");
+  await writeFile(testg1Path, "");
+  await writeFile(testh1Path, "");
+  await writeFile(testi1Path, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/add1.txt CREATE
+${tmpDir}/add1.txt CLOSE_WRITE
+${tmpDir}/add2.txt CREATE
+${tmpDir}/add2.txt CLOSE_WRITE
+${tmpDir}/add3.txt CREATE
+${tmpDir}/add3.txt CLOSE_WRITE
+${tmpDir}/add4.txt CREATE
+${tmpDir}/add4.txt CLOSE_WRITE
+${tmpDir}/add5.txt CREATE
+${tmpDir}/add5.txt CLOSE_WRITE
+${tmpDir}/add6.txt CREATE
+${tmpDir}/add6.txt CLOSE_WRITE
+${tmpDir}/add7.txt CREATE
+${tmpDir}/add7.txt CLOSE_WRITE
+${tmpDir}/add8.txt CREATE
+${tmpDir}/add8.txt CLOSE_WRITE
+${tmpDir}/add9.txt CREATE
+${tmpDir}/add9.txt CLOSE_WRITE
+${tmpDir}/b/add1.txt CREATE
+${tmpDir}/b/add1.txt CLOSE_WRITE
+${tmpDir}/b/add2.txt CREATE
+${tmpDir}/b/add2.txt CLOSE_WRITE
+${tmpDir}/b/add3.txt CREATE
+${tmpDir}/b/add3.txt CLOSE_WRITE
+${tmpDir}/b/add4.txt CREATE
+${tmpDir}/b/add4.txt CLOSE_WRITE
+${tmpDir}/b/add5.txt CREATE
+${tmpDir}/b/add5.txt CLOSE_WRITE
+${tmpDir}/b/add6.txt CREATE
+${tmpDir}/b/add6.txt CLOSE_WRITE
+${tmpDir}/b/add7.txt CREATE
+${tmpDir}/b/add7.txt CLOSE_WRITE
+${tmpDir}/b/add8.txt CREATE
+${tmpDir}/b/add8.txt CLOSE_WRITE
+${tmpDir}/b/add9.txt CREATE
+${tmpDir}/b/add9.txt CLOSE_WRITE
+${tmpDir}/c/add1.txt CREATE
+${tmpDir}/c/add1.txt CLOSE_WRITE
+${tmpDir}/c/add2.txt CREATE
+${tmpDir}/c/add2.txt CLOSE_WRITE
+${tmpDir}/c/add3.txt CREATE
+${tmpDir}/c/add3.txt CLOSE_WRITE
+${tmpDir}/c/add4.txt CREATE
+${tmpDir}/c/add4.txt CLOSE_WRITE
+${tmpDir}/c/add5.txt CREATE
+${tmpDir}/c/add5.txt CLOSE_WRITE
+${tmpDir}/c/add6.txt CREATE
+${tmpDir}/c/add6.txt CLOSE_WRITE
+${tmpDir}/c/add7.txt CREATE
+${tmpDir}/c/add7.txt CLOSE_WRITE
+${tmpDir}/c/add8.txt CREATE
+${tmpDir}/c/add8.txt CLOSE_WRITE
+${tmpDir}/c/add9.txt CREATE
+${tmpDir}/c/add9.txt CLOSE_WRITE
+${tmpDir}/d/add1.txt CREATE
+${tmpDir}/d/add1.txt CLOSE_WRITE
+${tmpDir}/e/add1.txt CREATE
+${tmpDir}/e/add1.txt CLOSE_WRITE
+${tmpDir}/f/add1.txt CREATE
+${tmpDir}/f/add1.txt CLOSE_WRITE
+${tmpDir}/g/add1.txt CREATE
+${tmpDir}/g/add1.txt CLOSE_WRITE
+${tmpDir}/h/add1.txt CREATE
+${tmpDir}/h/add1.txt CLOSE_WRITE
+${tmpDir}/i/add1.txt CREATE
+${tmpDir}/i/add1.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("remove and recreate file", async () => {
+  const tmpDir = await getTmpDir();
+  await writeFile(`${tmpDir}/1.txt`, "");
+  const watcher = await createWatcher([tmpDir]);
+  await rm(`${tmpDir}/1.txt`);
+  await writeFile(`${tmpDir}/1.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1.txt DELETE
+${tmpDir}/1.txt CREATE
+${tmpDir}/1.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
 // TODO test move in folder then create folder inside that folder, remove outer folder and create file in inner folder
 
 // TODO test remove lowest wd
