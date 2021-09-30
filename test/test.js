@@ -1016,12 +1016,16 @@ test("move out child folder, remove parent folder, move child folder back in", a
   await rename(`${tmpDir}/1/2`, `${tmpDir2}/2`);
   await rm(`${tmpDir}/1`, { recursive: true });
   await rename(`${tmpDir2}/2`, `${tmpDir}/2`);
-  await writeFile(`${tmpDir}/2/a.txt`, "");
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/1/2 ISDIRMOVED_FROMMOVE
 ${tmpDir}/1 DELETEISDIR
 ${tmpDir}/2 ISDIRMOVED_TOMOVE
-${tmpDir}/2/a.txt CREATE
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/2/a.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/2/a.txt CREATE
 ${tmpDir}/2/a.txt CLOSE_WRITE
 `);
   });
