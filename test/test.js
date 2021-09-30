@@ -673,7 +673,7 @@ ${tmpDir}/1 CLOSE_WRITE
   watcher.dispose();
 });
 
-test.skip("misc - move out folder and move it back in", async () => {
+test("move out folder and move it back in", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir}/1`);
@@ -681,11 +681,13 @@ test.skip("misc - move out folder and move it back in", async () => {
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await writeFile(`${tmpDir2}/1/a.txt`, "");
   await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
-  await writeFile(`${tmpDir2}/b.txt`, "");
+  await writeFile(`${tmpDir}/b.txt`, "");
   // TODO should detect b.txt change
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
 ${tmpDir}/1 ISDIRMOVED_TOMOVE
+${tmpDir}/b.txt CREATE
+${tmpDir}/b.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -1075,7 +1077,7 @@ test("remove multiple files in parallel", async () => {
 
 // TODO test move out multiple files while moving in multiple files
 
-test.skip("move out multiple files in parallel", async () => {
+test("move out multiple files in parallel", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await writeFile(`${tmpDir}/1`, "");
@@ -1087,18 +1089,15 @@ test.skip("move out multiple files in parallel", async () => {
     rename(`${tmpDir}/2`, `${tmpDir2}/2`),
     rename(`${tmpDir}/3`, `${tmpDir2}/3`),
   ]);
-  // TODO order not fixed
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 MOVED_FROMMOVE
-${tmpDir}/2 MOVED_FROMMOVE
-${tmpDir}/3 MOVED_FROMMOVE
-`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1 MOVED_FROMMOVE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2 MOVED_FROMMOVE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3 MOVED_FROMMOVE`);
   });
   watcher.dispose();
 });
 
-// TODO
-test.skip("move out multiple files and folders", async () => {
+test("move out multiple files and folders", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir}/1`);
@@ -1109,13 +1108,15 @@ test.skip("move out multiple files and folders", async () => {
   await rename(`${tmpDir}/2/3.txt`, `${tmpDir2}/3.txt`);
   await rename(`${tmpDir}/2`, `${tmpDir2}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
+${tmpDir}/2/3.txt MOVED_FROMMOVE
+${tmpDir}/2 ISDIRMOVED_FROMMOVE
 `);
   });
   watcher.dispose();
 });
 
-test.skip("create nine files in one directory", async () => {
+test("create nine files in one directory", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await Promise.all([
@@ -1134,27 +1135,25 @@ test.skip("create nine files in one directory", async () => {
     writeFile(`${tmpDir}/8`, ""),
   ]);
   await writeFile(`${tmpDir}/9`, "");
-  // TODO order is not fixed
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 CREATE
-${tmpDir}/2 CREATE
-${tmpDir}/3 CREATE
-${tmpDir}/4 CREATE
-${tmpDir}/5 CREATE
-${tmpDir}/6 CREATE
-${tmpDir}/7 CREATE
-${tmpDir}/8 CREATE
-${tmpDir}/9 CREATE
-${tmpDir}/1 CLOSE_WRITE
-${tmpDir}/2 CLOSE_WRITE
-${tmpDir}/3 CLOSE_WRITE
-${tmpDir}/4 CLOSE_WRITE
-${tmpDir}/5 CLOSE_WRITE
-${tmpDir}/6 CLOSE_WRITE
-${tmpDir}/7 CLOSE_WRITE
-${tmpDir}/8 CLOSE_WRITE
-${tmpDir}/9 CLOSE_WRITE
-`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/4 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/4 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/5 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/5 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/6 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/6 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/7 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/7 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/8 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/8 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/9 CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/9 CLOSE_WRITE`);
   });
   watcher.dispose();
 });
