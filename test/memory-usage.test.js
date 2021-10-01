@@ -50,7 +50,7 @@ export const createWatcher = async (args = [], options = {}) => {
   };
 };
 
-test.skip("memory should stay the same when adding files", async () => {
+test("memory should stay the same when adding files", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const initialStats = await getStats(watcher.pid);
