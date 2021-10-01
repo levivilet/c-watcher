@@ -876,7 +876,6 @@ ${tmpDir}/2 ISDIRMOVED_TOMOVE
   });
   watcher.dispose();
 });
-// TODO test move, move-in, move-out with nested folder
 
 test("move in nested folder", async () => {
   const tmpDir = await getTmpDir();
@@ -1394,6 +1393,22 @@ test("move in folder then create folder inside that folder, remove outer folder 
 ${tmpDir}/1/2 CREATEISDIR
 ${tmpDir}/1 ISDIRMOVED_FROMMOVE
 `);
+  });
+  watcher.dispose();
+});
+
+test("create and remove deeply nested folder", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/1`);
+  const watcher = await createWatcher([tmpDir]);
+  await mkdir(
+    `${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1`,
+    { recursive: true }
+  );
+  await rm(`${tmpDir}/1`, { recursive: true });
+  await waitForExpect(() => {
+    expect(watcher.stdout).toContain(`${tmpDir}/1/1 CREATEISDIR`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1 DELETEISDIR`);
   });
   watcher.dispose();
 });
