@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rename, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import pidusage from "pidusage";
+import { setTimeout } from "timers/promises";
 import waitForExpect from "wait-for-expect";
 
 waitForExpect.defaults.timeout = 10_000;
@@ -50,7 +51,7 @@ export const createWatcher = async (args = [], options = {}) => {
   };
 };
 
-test.skip("memory should stay the same when adding files", async () => {
+test("memory should stay the same when adding files", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const initialStats = await getStats(watcher.pid);
@@ -65,7 +66,7 @@ test.skip("memory should stay the same when adding files", async () => {
   watcher.dispose();
 }, 20_000);
 
-test.skip("memory should not grow when adding and removing folders", async () => {
+test("memory should not grow when adding and removing folders", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const initialStats = await getStats(watcher.pid);
@@ -130,63 +131,53 @@ test.skip("memory should not grow when adding and removing folders", async () =>
 }, 40_000);
 
 test.skip("memory should not grow when moving out folders", async () => {
+  const RUNS = 5_000;
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const initialStats = await getStats(watcher.pid);
-  for (let i = 0; i < 5_000; i++) {
+  for (let i = 0; i < RUNS; i++) {
     await mkdir(`${tmpDir}/1-${i}`);
   }
-  await waitForExpect(() => {
-    expect(watcher.eventCount).toBe(5_000);
-  });
+  // TODO timeouts are bad
+  await setTimeout(1000);
   const middleStats1 = await getStats(watcher.pid);
-  for (let i = 0; i < 5_000; i++) {
+  for (let i = 0; i < RUNS; i++) {
     await rename(`${tmpDir}/1-${i}`, `${tmpDir2}/1-${i}`);
   }
-  await waitForExpect(() => {
-    expect(watcher.eventCount).toBe(10_000);
-  });
-  for (let i = 0; i < 5_000; i++) {
+  for (let i = 0; i < RUNS; i++) {
     await mkdir(`${tmpDir}/2-${i}`);
   }
-  await waitForExpect(() => {
-    expect(watcher.eventCount).toBe(15_000);
-  });
+  await setTimeout(1000);
   const middleStats2 = await getStats(watcher.pid);
-  for (let i = 0; i < 5_000; i++) {
+  for (let i = 0; i < RUNS; i++) {
     await rename(`${tmpDir}/2-${i}`, `${tmpDir2}/2-${i}`);
   }
-  await waitForExpect(() => {
-    expect(watcher.eventCount).toBe(20_000);
-  });
-  for (let i = 0; i < 5_000; i++) {
+  for (let i = 0; i < RUNS; i++) {
     await mkdir(`${tmpDir}/3-${i}`);
   }
-  await waitForExpect(() => {
-    expect(watcher.eventCount).toBe(25_000);
-  });
+  await setTimeout(1000);
   const middleStats3 = await getStats(watcher.pid);
-  for (let i = 0; i < 5_000; i++) {
+  for (let i = 0; i < RUNS; i++) {
     await rename(`${tmpDir}/3-${i}`, `${tmpDir2}/3-${i}`);
   }
-  await waitForExpect(() => {
-    expect(watcher.eventCount).toBe(30_000);
-  });
-  for (let i = 0; i < 5_000; i++) {
+  for (let i = 0; i < RUNS; i++) {
     await mkdir(`${tmpDir}/4-${i}`);
   }
-  await waitForExpect(() => {
-    expect(watcher.eventCount).toBe(35_000);
-  });
+  await setTimeout(1000);
   const middleStats4 = await getStats(watcher.pid);
-  for (let i = 0; i < 5_000; i++) {
+  for (let i = 0; i < RUNS; i++) {
     await rename(`${tmpDir}/4-${i}`, `${tmpDir2}/4-${i}`);
   }
-  await waitForExpect(() => {
-    expect(watcher.eventCount).toBe(40_000);
-  });
   const finalStats = await getStats(watcher.pid);
+  console.info(`memory before: ${initialStats.memory}`);
+  console.info(`memory middle 1: ${middleStats1.memory}`);
+  console.info(`memory middle 2: ${middleStats2.memory}`);
+  console.info(`memory middle 3: ${middleStats3.memory}`);
+  console.info(`memory middle 4: ${middleStats4.memory}`);
+  console.info(`memory after: ${finalStats.memory}`);
+  // console.info(`Event count: ${watcher.stdout.split("\n").length}`);
+  // watcher.dispose();
   expect(middleStats1.memory).toBeGreaterThan(initialStats.memory);
   expect(middleStats2.memory).toBe(middleStats3.memory);
   expect(middleStats3.memory).toBe(middleStats4.memory);
