@@ -482,7 +482,7 @@ ${tmpDir}/new DELETEISDIR
   watcher.dispose();
 });
 
-test.skip("move in folder, then create file in that folder", async () => {
+test("move in folder, then create file in that folder", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir2}/old`);
@@ -1363,7 +1363,7 @@ ${tmpDir}/1.txt CLOSE_WRITE
   watcher.dispose();
 });
 
-test.skip("move in folder then create folder inside that folder, remove outer folder and create file in inner folder", async () => {
+test("move in folder then create folder inside that folder, remove outer folder and create file in inner folder", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir2}/1`);
@@ -1391,8 +1391,6 @@ test("inner watcher should be removed when parent folder is moved out", async ()
   await writeFile(`${tmpDir2}/1/2/3.txt`, "");
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/1/2/3.txt CREATE
-${tmpDir}/1/2/3.txt CLOSE_WRITE
 `);
   });
   watcher.dispose();

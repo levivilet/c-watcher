@@ -128,8 +128,9 @@ int storage_find_by_path(const char *fpath) {
 void storage_find_and_remove_by_path(const char *fpath, void (*cb)(int wd)) {
     ListNode *prev = head;
     ListNode *node = head;
+    int len = strlen(fpath);
     while (node != NULL) {
-        if (strcmp(node->fpath, fpath) == 0) {
+        if (strncmp(node->fpath, fpath, len) == 0) {
             int wd = node->wd;
             cb(wd);
             if (node == head) {
