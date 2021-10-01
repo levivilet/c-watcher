@@ -1394,7 +1394,7 @@ test("inner watcher should be removed when parent folder is moved out", async ()
   watcher.dispose();
 });
 
-test("rename deeply nested folder", async () => {
+test("rename deeply nested folder (https://github.com/inotify-tools/inotify-tools/issues/130)", async () => {
   const tmpDir = await getTmpDir();
   await mkdir(`${tmpDir}/a1/a2/a3/a4/a5/a6/a7/a8/a9`, { recursive: true });
   const watcher = await createWatcher([tmpDir]);
@@ -1405,6 +1405,23 @@ test("rename deeply nested folder", async () => {
 ${tmpDir}/b1 ISDIRMOVED_TOMOVE
 ${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt CREATE
 ${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("move some files around (https://github.com/inotify-tools/inotify-tools/issues/137)", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir}/to_move/dir`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/to_move/dir/test_file.txt`, "");
+  await rename(`${tmpDir}/to_move`, `${tmpDir2}/to_move`);
+  await writeFile(`${tmpDir2}/to_move/dir/test_file.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/to_move/dir/test_file.txt CREATE
+${tmpDir}/to_move/dir/test_file.txt CLOSE_WRITE
+${tmpDir}/to_move ISDIRMOVED_FROMMOVE
 `);
   });
   watcher.dispose();
