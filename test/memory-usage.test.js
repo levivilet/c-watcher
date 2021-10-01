@@ -124,13 +124,14 @@ test("memory should not grow when adding and removing folders", async () => {
   });
   const finalStats = await getStats(watcher.pid);
   expect(middleStats1.memory).toBeGreaterThan(initialStats.memory);
-  expect(middleStats2.memory).toBe(middleStats3.memory);
-  expect(middleStats3.memory).toBe(middleStats4.memory);
-  expect(middleStats4.memory).toBe(finalStats.memory);
+  expect(middleStats2.memory).toBeLessThanOrEqual(middleStats1.memory);
+  expect(middleStats3.memory).toBeLessThanOrEqual(middleStats2.memory);
+  expect(middleStats4.memory).toBeLessThanOrEqual(middleStats3.memory);
+  expect(finalStats.memory).toBeLessThanOrEqual(middleStats4.memory);
   watcher.dispose();
 }, 40_000);
 
-test.skip("memory should not grow when moving out folders", async () => {
+test("memory should not grow when moving out folders", async () => {
   const RUNS = 5_000;
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
@@ -140,7 +141,7 @@ test.skip("memory should not grow when moving out folders", async () => {
     await mkdir(`${tmpDir}/1-${i}`);
   }
   // TODO timeouts are bad
-  await setTimeout(1000);
+  await setTimeout(3000);
   const middleStats1 = await getStats(watcher.pid);
   for (let i = 0; i < RUNS; i++) {
     await rename(`${tmpDir}/1-${i}`, `${tmpDir2}/1-${i}`);
@@ -148,7 +149,7 @@ test.skip("memory should not grow when moving out folders", async () => {
   for (let i = 0; i < RUNS; i++) {
     await mkdir(`${tmpDir}/2-${i}`);
   }
-  await setTimeout(1000);
+  await setTimeout(3000);
   const middleStats2 = await getStats(watcher.pid);
   for (let i = 0; i < RUNS; i++) {
     await rename(`${tmpDir}/2-${i}`, `${tmpDir2}/2-${i}`);
@@ -156,7 +157,7 @@ test.skip("memory should not grow when moving out folders", async () => {
   for (let i = 0; i < RUNS; i++) {
     await mkdir(`${tmpDir}/3-${i}`);
   }
-  await setTimeout(1000);
+  await setTimeout(3000);
   const middleStats3 = await getStats(watcher.pid);
   for (let i = 0; i < RUNS; i++) {
     await rename(`${tmpDir}/3-${i}`, `${tmpDir2}/3-${i}`);
@@ -164,7 +165,7 @@ test.skip("memory should not grow when moving out folders", async () => {
   for (let i = 0; i < RUNS; i++) {
     await mkdir(`${tmpDir}/4-${i}`);
   }
-  await setTimeout(1000);
+  await setTimeout(3000);
   const middleStats4 = await getStats(watcher.pid);
   for (let i = 0; i < RUNS; i++) {
     await rename(`${tmpDir}/4-${i}`, `${tmpDir2}/4-${i}`);
@@ -176,11 +177,10 @@ test.skip("memory should not grow when moving out folders", async () => {
   console.info(`memory middle 3: ${middleStats3.memory}`);
   console.info(`memory middle 4: ${middleStats4.memory}`);
   console.info(`memory after: ${finalStats.memory}`);
-  // console.info(`Event count: ${watcher.stdout.split("\n").length}`);
-  // watcher.dispose();
   expect(middleStats1.memory).toBeGreaterThan(initialStats.memory);
-  expect(middleStats2.memory).toBe(middleStats3.memory);
-  expect(middleStats3.memory).toBe(middleStats4.memory);
-  expect(middleStats4.memory).toBe(finalStats.memory);
+  expect(middleStats2.memory).toBeLessThanOrEqual(middleStats1.memory);
+  expect(middleStats3.memory).toBeLessThanOrEqual(middleStats2.memory);
+  expect(middleStats4.memory).toBeLessThanOrEqual(middleStats3.memory);
+  expect(finalStats.memory).toBeLessThanOrEqual(middleStats4.memory);
   watcher.dispose();
 }, 40_000);
