@@ -141,6 +141,7 @@ test("copy file", async () => {
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/2.txt CREATE
 ${tmpDir}/2.txt MODIFY
+${tmpDir}/2.txt ATTRIB
 ${tmpDir}/2.txt CLOSE_WRITE
 `);
   });
@@ -638,15 +639,13 @@ ${tmpDir}/${name} CLOSE_WRITE
   watcher.dispose();
 });
 
-test("misc - change file attributes", async () => {
+test("change file attributes", async () => {
   const tmpDir = await getTmpDir();
   await writeFile(`${tmpDir}/1`, "");
   const watcher = await createWatcher([tmpDir]);
   await chmod(`${tmpDir}/1`, "555");
-  await writeFile(`${tmpDir}/2`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/2 CREATE
-${tmpDir}/2 CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ATTRIB
 `);
   });
   watcher.dispose();

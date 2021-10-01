@@ -23,7 +23,7 @@ void notify_dispose() {
 int notify_add_watch(const char *fpath) {
     // printf("ADD WATCH %s\n", fpath);
     int flags = IN_MODIFY | IN_CLOSE_WRITE | IN_MOVED_FROM | IN_MOVED_TO |
-                IN_CREATE | IN_DELETE;
+                IN_CREATE | IN_DELETE | IN_ATTRIB;
     // flags = IN_ALL_EVENTS;
     // IN_IGNORED
     int wd = inotify_add_watch(fd, fpath, flags);
