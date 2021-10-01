@@ -1406,9 +1406,11 @@ test("create and remove deeply nested folder", async () => {
     { recursive: true }
   );
   await rm(`${tmpDir}/1`, { recursive: true });
+  await writeFile(`${tmpDir}/2.txt`, "");
   await waitForExpect(() => {
     expect(watcher.stdout).toContain(`${tmpDir}/1/1 CREATEISDIR`);
     expect(watcher.stdout).toContain(`${tmpDir}/1 DELETEISDIR`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2.txt CREATE`);
   });
   watcher.dispose();
 });
