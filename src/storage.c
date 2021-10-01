@@ -34,7 +34,6 @@ void storage_print(void *out) {
         current = current->next;
     }
     fprintf(out, "\n");
-    fprintf(out, "storage print done\n");
 }
 
 void storage_print_count() {
@@ -126,12 +125,13 @@ int storage_find_by_path(const char *fpath) {
     return -1;
 }
 
-int storage_find_and_remove_by_path(const char *fpath) {
+void storage_find_and_remove_by_path(const char *fpath, void (*cb)(int wd)) {
     ListNode *prev = head;
     ListNode *node = head;
     while (node != NULL) {
         if (strcmp(node->fpath, fpath) == 0) {
             int wd = node->wd;
+            cb(wd);
             if (node == head) {
                 head = node->next;
             } else {
@@ -139,10 +139,8 @@ int storage_find_and_remove_by_path(const char *fpath) {
             }
             free(node->fpath);
             free(node);
-            return wd;
         }
         prev = node;
         node = node->next;
     }
-    return -1;
 }

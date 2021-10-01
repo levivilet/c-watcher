@@ -37,26 +37,18 @@ const char *dir_path(const struct inotify_event *event) {
 
 static void add_watch(const char *fpath) {
     int wd = notify_add_watch(fpath);
-    fprintf(fp, "ADD WATCH %s\n", fpath);
+    fprintf(fp, "ADD WATCH %d %s\n", wd, fpath);
 
     // TODO use dynamic array (or better tree)
     storage_add(wd, fpath);
-    // storage_print();
+    storage_print(fp);
     // storage_print();
 }
 
 static void remove_watch_by_path(const char *fpath) {
     fprintf(fp, "rm by path %s\n", fpath);
     // storage_print();
-    int wd = storage_find_and_remove_by_path(fpath);
-    fprintf(fp, "wd %d\n", wd);
-    if (wd == -1) {
-        return;
-    }
-    // wd = 2;
-    // printf("got wd to remove %d\n", wd);
-    notify_remove_watch(wd);
-    // storage_print();
+    storage_find_and_remove_by_path(fpath, notify_remove_watch);
 }
 
 static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
@@ -77,6 +69,7 @@ static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
 
 /* Walk folder recursively and setup watcher for each file */
 static void watch_recursively(const char *dir) {
+    fprintf(fp, "watch recursively %s\n", dir);
     // add_watch(dir);
     int flags = FTW_PHYS;
     // TODO tweak amount of descriptors to tweak performance
@@ -240,7 +233,7 @@ static void adjust_watchers(const struct inotify_event *event) {
         full_path(&fpath, event);
         // fprintf(fp, "ADD WATCHER %s\n", fpath);
         // printf("FULLPATH%s\n", path);
-        // printf("NEW_DIR in %s\n", node->fpath);
+        fprintf(fp, "NEW_DIR - created or moved  %s\n", fpath);
         // printf("NAME: %s\n", event->name);
         watch_recursively(fpath);
         free(fpath);
@@ -339,6 +332,7 @@ static void handle_events(int fd) {
 
 int main(int argc, char *argv[]) {
     fp = fopen("/tmp/test.txt", "w+");
+    // fp = stdout;
 
     if (argc < 2) {
         printf("Usage: %s PATH [PATH ...]\n", argv[0]);

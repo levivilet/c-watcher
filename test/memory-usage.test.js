@@ -50,7 +50,7 @@ export const createWatcher = async (args = [], options = {}) => {
   };
 };
 
-test("memory should stay the same when adding files", async () => {
+test.skip("memory should stay the same when adding files", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const initialStats = await getStats(watcher.pid);
@@ -65,7 +65,7 @@ test("memory should stay the same when adding files", async () => {
   watcher.dispose();
 }, 20_000);
 
-test("memory should not grow when adding and removing folders", async () => {
+test.skip("memory should not grow when adding and removing folders", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const initialStats = await getStats(watcher.pid);
