@@ -65,13 +65,16 @@ test("memory should stay the same when adding files", async () => {
   watcher.dispose();
 }, 20_000);
 
-test.skip("memory should not grow when adding and removing folders", async () => {
+test("memory should not grow when adding and removing folders", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const initialStats = await getStats(watcher.pid);
   for (let i = 0; i < 5_000; i++) {
     await mkdir(`${tmpDir}/1-${i}`);
   }
+  await waitForExpect(() => {
+    expect(watcher.eventCount).toBe(5_000);
+  });
   const middleStats1 = await getStats(watcher.pid);
   for (let i = 0; i < 5_000; i++) {
     await rm(`${tmpDir}/1-${i}`, { recursive: true });
@@ -82,6 +85,9 @@ test.skip("memory should not grow when adding and removing folders", async () =>
   for (let i = 0; i < 5_000; i++) {
     await mkdir(`${tmpDir}/2-${i}`);
   }
+  await waitForExpect(() => {
+    expect(watcher.eventCount).toBe(15_000);
+  });
   const middleStats2 = await getStats(watcher.pid);
   for (let i = 0; i < 5_000; i++) {
     await rm(`${tmpDir}/2-${i}`, { recursive: true });
@@ -92,6 +98,9 @@ test.skip("memory should not grow when adding and removing folders", async () =>
   for (let i = 0; i < 5_000; i++) {
     await mkdir(`${tmpDir}/3-${i}`);
   }
+  await waitForExpect(() => {
+    expect(watcher.eventCount).toBe(25_000);
+  });
   const middleStats3 = await getStats(watcher.pid);
   for (let i = 0; i < 5_000; i++) {
     await rm(`${tmpDir}/3-${i}`, { recursive: true });
@@ -102,6 +111,9 @@ test.skip("memory should not grow when adding and removing folders", async () =>
   for (let i = 0; i < 5_000; i++) {
     await mkdir(`${tmpDir}/4-${i}`);
   }
+  await waitForExpect(() => {
+    expect(watcher.eventCount).toBe(35_000);
+  });
   const middleStats4 = await getStats(watcher.pid);
   for (let i = 0; i < 5_000; i++) {
     await rm(`${tmpDir}/4-${i}`, { recursive: true });
