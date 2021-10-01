@@ -7,4 +7,4 @@ int notify_add_watch(const char *fpath);
 
 void notify_remove_watch(int wd);
 
-void notify_print_event();
+void notify_print_event(const struct inotify_event *event,void* out);

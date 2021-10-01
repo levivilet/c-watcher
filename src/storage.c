@@ -26,15 +26,15 @@ static ListNode *head = NULL;
 
 /* end globals */
 
-void storage_print() {
+void storage_print(void *out) {
     ListNode *current = head;
-    printf("\n----- Storage -----\n");
+    fprintf(out, "\n----- Storage -----\n");
     while (current != NULL) {
-        printf("node: %d %s\n", current->wd, current->fpath);
+        fprintf(out, "node: %d %s\n", current->wd, current->fpath);
         current = current->next;
     }
-    printf("\n");
-    printf("storage print done\n");
+    fprintf(out, "\n");
+    fprintf(out, "storage print done\n");
 }
 
 void storage_print_count() {
@@ -67,10 +67,7 @@ ListNode *storage_find(int wd) {
         }
         node = node->next;
     }
-    printf("ERR %d\n", wd);
-    fflush(stdout);
-    fprintf(stderr, "node is NULL, extremely unlucky user");
-    exit(EXIT_FAILURE);
+    return NULL;
 }
 
 void storage_rename(const char *moved_from, const char *moved_to) {
@@ -112,10 +109,10 @@ void storage_remove_by_wd(int wd) {
         prev = node;
         node = node->next;
     }
-    printf("storage remove error");
-    fflush(stdout);
-    fprintf(stderr, "node is NULL, extremely unlucky user");
-    exit(EXIT_FAILURE);
+    // printf("storage remove error");
+    // fflush(stdout);
+    // fprintf(stderr, "node is NULL, extremely unlucky user");
+    // exit(EXIT_FAILURE);
 }
 
 int storage_find_by_path(const char *fpath) {
@@ -126,8 +123,26 @@ int storage_find_by_path(const char *fpath) {
         }
         node = node->next;
     }
-    printf("err: not found");
-    fprintf(stderr, "node is NULL, extremely unlucky user");
-    exit(EXIT_FAILURE);
+    return -1;
+}
+
+int storage_find_and_remove_by_path(const char *fpath) {
+    ListNode *prev = head;
+    ListNode *node = head;
+    while (node != NULL) {
+        if (strcmp(node->fpath, fpath) == 0) {
+            int wd = node->wd;
+            if (node == head) {
+                head = node->next;
+            } else {
+                prev->next = node->next;
+            }
+            free(node->fpath);
+            free(node);
+            return wd;
+        }
+        prev = node;
+        node = node->next;
+    }
     return -1;
 }

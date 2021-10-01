@@ -15,7 +15,9 @@
 
 extern int fd;
 
-const struct inotify_event *moved_from_event = NULL;
+char *moved_from = 0;
+
+FILE *fp;
 
 void full_path(char **fpath, const struct inotify_event *event) {
     ListNode *node = storage_find(event->wd);
@@ -27,9 +29,15 @@ void full_path(char **fpath, const struct inotify_event *event) {
     }
 }
 
+const char *dir_path(const struct inotify_event *event) {
+    ListNode *node = storage_find(event->wd);
+    fprintf(fp, "wd: %d\n", event->wd);
+    return node->fpath;
+}
+
 static void add_watch(const char *fpath) {
     int wd = notify_add_watch(fpath);
-    // fprintf(stdout, "ADD WATCH %s\n", fpath);
+    fprintf(fp, "ADD WATCH %s\n", fpath);
 
     // TODO use dynamic array (or better tree)
     storage_add(wd, fpath);
@@ -38,9 +46,13 @@ static void add_watch(const char *fpath) {
 }
 
 static void remove_watch_by_path(const char *fpath) {
-    // printf("rm by path %s\n", fpath);
+    fprintf(fp, "rm by path %s\n", fpath);
     // storage_print();
-    int wd = storage_find_by_path(fpath);
+    int wd = storage_find_and_remove_by_path(fpath);
+    fprintf(fp, "wd %d\n", wd);
+    if (wd == -1) {
+        return;
+    }
     // wd = 2;
     // printf("got wd to remove %d\n", wd);
     notify_remove_watch(wd);
@@ -49,7 +61,11 @@ static void remove_watch_by_path(const char *fpath) {
 
 static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
                         struct FTW *ftwbuf) {
+    // if (ftwbuf->level == 0) {
+    //     return 0;
+    // }
     // printf("VISIT PATH %s\n", fpath);
+    // fprintf(fp, "level%d\n", ftwbuf->level);
     // sb.f
     if (tflag == FTW_D) {
         add_watch(fpath);
@@ -61,6 +77,7 @@ static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
 
 /* Walk folder recursively and setup watcher for each file */
 static void watch_recursively(const char *dir) {
+    // add_watch(dir);
     int flags = FTW_PHYS;
     // TODO tweak amount of descriptors to tweak performance
     int descriptors = 255;
@@ -111,6 +128,11 @@ static void output_event(const struct inotify_event *event) {
 
     /* Print the name of the file. */
     ListNode *node = storage_find(event->wd);
+    // node can be null if there is a moved out event and
+    // then a file create event inside the moved out folder.
+    if (node == NULL) {
+        return;
+    }
 
     // fprintf(stdout, "%d ", node->wd);
     // fprintf(stdout, "COOKIE %d ", event->cookie);
@@ -152,34 +174,30 @@ static void adjust_watchers(const struct inotify_event *event) {
     // printf("EVENT LENGTH %d\n", event->len);
     // printf("EVENT NAME %s\n", event->name);
 
-    if (!(event->mask & IN_ISDIR)) {
-        if (event->mask & IN_IGNORED) {
-            // folder has been ignored -> remove from storage
-            // printf("!!!IGNORED!!! %d\n", event->wd);
-            storage_remove_by_wd(event->wd);
-            return;
-        }
-        return;
-    }
-    if (moved_from_event) {
-        // printf("HAS MOVED FROM EVENT\n");
+    if (moved_from) {
+        fprintf(fp, "HAS MOVED FROM EVENT POTENTIAL RENAME\n");
         // TODO check cookie
-        if (event->mask & IN_MOVED_TO) {
+        if (event->mask & IN_ISDIR && event->mask & IN_MOVED_TO) {
+            fprintf(fp, "moved from name %s\n", moved_from);
+            fprintf(fp, "moved to name %s\n", event->name);
+            // fprintf(fp, "printing events again");
+            // notify_print_event(moved_from_event, fp);
+            // notify_print_event(event, fp);
+            // fprintf(fp, "done printing events again");
             // matching event -> rename
             // just rename, keep watches
-            // printf("keep watch inside\n");
-            char *moved_from;
-            full_path(&moved_from, moved_from_event);
+            fprintf(fp, "RENAME keep watch inside\n");
             char *moved_to;
             full_path(&moved_to, event);
             // storage_print();
-            // printf("moved from %s\n", moved_from);
-            // printf("moved to %s\n", moved_to);
+            fprintf(fp, "moved from %s\n", moved_from);
+            fprintf(fp, "moved to %s\n", moved_to);
             // printf("storage rename\n");
             // fflush(stdout);
             storage_rename(moved_from, moved_to);
             // storage_print();
             free(moved_from);
+            moved_from = 0;
             free(moved_to);
             // storage_print();
             // printf("done storage rename\n");
@@ -187,32 +205,40 @@ static void adjust_watchers(const struct inotify_event *event) {
             // printf("new full path %s\n", fpath);
             // storage_rename();
             // moved_from->fpath=
-            moved_from_event = NULL;
             return;
         }
         // moved outside -> remove watch
-        // printf("IS DIR %d", event->mask & IN_ISDIR);
-        char *fpath;
-        full_path(&fpath, event);
+        // const char *fpath = dir_path(event);
+        // fprintf(fp, "NO RENAME, just ignored folder %s\n", fpath);
         // printf("event %s\n", event->name);
         // storage_print();
         // printf("fpath: %s\n", fpath);
         // printf("remove watch %d\n", event->wd);
-        remove_watch_by_path(fpath);
-        free(fpath);
-        if (event->mask & IN_MOVED_FROM) {
-            moved_from_event = event;
-        } else {
-            moved_from_event = NULL;
+        remove_watch_by_path(moved_from);
+        free(moved_from);
+        moved_from = 0;
+        storage_print(fp);
+    }
+
+    if (!(event->mask & IN_ISDIR)) {
+        if (event->mask & IN_IGNORED) {
+            // folder has been ignored -> remove from storage
+            fprintf(fp, "!!!IGNORED!!! %d\n", event->wd);
+            fprintf(fp, "LEN %d\n", event->len);
+            fprintf(fp, "NAME %s\n", event->name);
+            fprintf(fp, "IS DIR %d\n", event->mask & IN_ISDIR);
+            storage_remove_by_wd(event->wd);
+            return;
         }
         return;
     }
-    // printf("below\n");
+
+    fprintf(fp, "normal, no moved_from event\n");
     if ((event->mask & IN_CREATE) || event->mask & IN_MOVED_TO) {
         // new folder -> add watcher
         char *fpath;
         full_path(&fpath, event);
-        // printf("ADD WATCHER %s\n", fpath);
+        // fprintf(fp, "ADD WATCHER %s\n", fpath);
         // printf("FULLPATH%s\n", path);
         // printf("NEW_DIR in %s\n", node->fpath);
         // printf("NAME: %s\n", event->name);
@@ -223,8 +249,9 @@ static void adjust_watchers(const struct inotify_event *event) {
 
     // }
     if (event->mask & IN_MOVED_FROM) {
-        // printf("SET MOVED_FROM EVENT\n");
-        moved_from_event = event;
+        fprintf(fp, "SET MOVED_FROM EVENT\n");
+        fprintf(fp, "SET MOVED_FROM EVENT NAME %s\n", event->name);
+        full_path(&moved_from, event);
         // printf("MOVED from, from%s %d\n", moved_from->fpath,
         //        event->wd);
         // printf("%s\n", event->name);
@@ -259,7 +286,7 @@ static void handle_events(int fd) {
     /* Loop while events can be read from inotify file descriptor. */
 
     for (;;) {
-        // printf("LOOP ITERATION\n");
+        fprintf(fp, "LOOP ITERATION\n");
         /* Read some events. */
 
         len = read(fd, buf, sizeof(buf));
@@ -282,35 +309,37 @@ static void handle_events(int fd) {
         for (char *ptr = buf; ptr < buf + len;
              ptr += sizeof(struct inotify_event) + event->len) {
             event = (const struct inotify_event *)ptr;
-            // notify_print_event(event);
-            // storage_print_count();`
-            output_event(event);
+            fprintf(fp, "start___\n");
+            notify_print_event(event, fp);
+            storage_print(fp);
             adjust_watchers(event);
-            // printf("iterate\n");
-        }
+            output_event(event);
+            // notify_print_event(event, fp);
+            fprintf(fp, "end___\n\n");
 
-        if (moved_from_event) {
-            // trailing moved_from event
-            // printf("trailing moved_from_event\n");
-            // TODO don't remove event.wd remove wd from child
-            // use (storage_find_by_path)
-            char *fpath;
-            full_path(&fpath, moved_from_event);
-            // printf("%s\n", fpath);
-            remove_watch_by_path(fpath);
-            // printf("before free\n");
-            free(fpath);
-            moved_from_event = NULL;
-            // printf("done\n");
+            // printf("iterate\n");
         }
     }
 
-    // printf("end of loop");
+    if (moved_from) {
+        // trailing moved_from event
+        fprintf(fp, "trailing moved_from_event\n");
+        remove_watch_by_path(moved_from);
+        free(moved_from);
+        moved_from = 0;
+        storage_print(fp);
+        // printf("done\n");
+    }
+
+    storage_print(fp);
+    fprintf(fp, "end of loop\n");
     // TODO free moved from if it is not null
     fflush(stdout);
 }
 
 int main(int argc, char *argv[]) {
+    fp = fopen("/tmp/test.txt", "w+");
+
     if (argc < 2) {
         printf("Usage: %s PATH [PATH ...]\n", argv[0]);
         exit(EXIT_FAILURE);
