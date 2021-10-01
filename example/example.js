@@ -49,34 +49,32 @@ const createWatcher = async (args = [], options = {}) => {
     clear() {
       result = "";
     },
+    get pid() {
+      return child.pid;
+    },
   };
 };
 
 const main = async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
-  await mkdir(`${tmpDir2}/1`);
   const watcher = await createWatcher([tmpDir]);
-  await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
-  // TODO test with fast creation of nested folder 1/2/3/4/5/6/7/8/9/10/11/12
-  await mkdir(`${tmpDir}/1/2`);
-  await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
-  await writeFile(`${tmpDir2}/1/2/3.txt`, "");
-  await setTimeout(100);
-  // console.log(watcher.stdout);
-  // await waitForExpect(() => {
-  //   if (
-  //     !watcher.stdout.includes(`${tmpDir}/1 ISDIRMOVED_TOMOVE`) &&
-  //     !watcher.stdout.includes(`${tmpDir}/1 ISDIRMOVED_FROMMOVE`) &&
-  //     !watcher.stdout.includes(`${tmpDir}/2 ISDIRMOVED_TOMOVE`) &&
-  //     !watcher.stdout.includes(`${tmpDir}/2 ISDIRMOVED_FROMMOVE`)
-  //   ) {
-  //     // console.log("\n\n\n\n\n\nn\n\\n\n\n\n\n\n\n\nnn\n\n\n\n\n\n\n\n\n\n\n");
-  //     // console.log(watcher.stdout);
-  //     throw new Error(`mismatch, ${watcher.stdout}`);
-  //   }
-  // });
-  // watcher.dispose();
+  const initialStats = await getStats(watcher.pid);
+  for (let i = 0; i < 100; i++) {
+    await mkdir(`${tmpDir}/${i}`);
+  }
+  await waitForExpect(() => {
+    const count = watcher.stdout.split("\n").length;
+    if (count !== 101) {
+      // console.info("does not match", count);
+      throw new Error(`mismatch ${count}`);
+    }
+    console.info("does match");
+  }, 20_000);
+  // await setTimeout(100);
+  for (let i = 0; i < 2; i++) {
+    await rename(`${tmpDir}/${i}`, `${tmpDir2}/${i}`);
+  }
 };
 
 main();

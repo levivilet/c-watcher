@@ -1,3 +1,14 @@
+#define _GNU_SOURCE
+
+#include <errno.h>
+#include <ftw.h>
+#include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/inotify.h>
+#include <time.h>
+#include <unistd.h>
+
 // TODO remove unused imports
 #include <errno.h>
 #include <ftw.h>
@@ -94,6 +105,8 @@ void storage_remove_by_wd(int wd) {
     // printf("STORAGE REMOVE %d\n", wd);
     ListNode *prev = head;
     ListNode *node = head;
+    // fprintf(stdout, "rm path %s\n", node->fpath);
+    // fflush(stdout);
     while (node != NULL) {
         if (node->wd == wd) {
             if (node == head) {
@@ -101,6 +114,8 @@ void storage_remove_by_wd(int wd) {
             } else {
                 prev->next = node->next;
             }
+            // fprintf(stdout, "found node\n");
+            // fflush(stdout);
             free(node->fpath);
             free(node);
             return;
@@ -130,8 +145,13 @@ void storage_find_and_remove_by_path(const char *fpath, void (*cb)(int wd)) {
     ListNode *node = head;
     int len = strlen(fpath);
     while (node != NULL) {
-        if (strncmp(node->fpath, fpath, len) == 0) {
+        // fprintf(stdout, "compare %s with %s\n", fpath, node->fpath);
+        if (strncmp(node->fpath, fpath, len) == 0 &&
+                strlen(node->fpath) == len ||
+            node->fpath[len] == '/') {
             int wd = node->wd;
+            // fprintf(stdout, "found wd %d\n", wd);
+            // fflush(stdout);
             cb(wd);
             if (node == head) {
                 head = node->next;

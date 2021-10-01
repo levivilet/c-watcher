@@ -1151,7 +1151,7 @@ test("move out multiple files in parallel", async () => {
   watcher.dispose();
 });
 
-test("move out multiple files and folders", async () => {
+test("move out some files and folders", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir}/1`);
@@ -1166,6 +1166,26 @@ test("move out multiple files and folders", async () => {
 ${tmpDir}/2/3.txt MOVED_FROM
 ${tmpDir}/2 ISDIR,MOVED_FROM
 `);
+  });
+  watcher.dispose();
+});
+
+test("move out many folders", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  for (let i = 0; i < 100; i++) {
+    await mkdir(`${tmpDir}/${i}`);
+  }
+  await waitForExpect(() => {
+    expect(watcher.stdout.split("\n").length).toBe(101);
+  });
+  for (let i = 0; i < 100; i++) {
+    await rename(`${tmpDir}/${i}`, `${tmpDir2}/${i}`);
+  }
+  await waitForExpect(() => {
+    expect(watcher.stdout).toContain(`${tmpDir}/1 ISDIR,MOVED_FROM`);
+    expect(watcher.stdout).toContain(`${tmpDir}/99 ISDIR,MOVED_FROM`);
   });
   watcher.dispose();
 });

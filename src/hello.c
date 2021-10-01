@@ -223,7 +223,9 @@ static void adjust_watchers(const struct inotify_event *event) {
             // folder has been ignored -> remove from storage
             fprintf(fp, "!!!IGNORED!!! %d\n", event->wd);
             fprintf(fp, "LEN %d\n", event->len);
-            fprintf(fp, "NAME %s\n", event->name);
+            if (event->len) {
+                fprintf(fp, "NAME %s\n", event->name);
+            }
             fprintf(fp, "IS DIR %d\n", event->mask & IN_ISDIR);
             storage_remove_by_wd(event->wd);
             return;
