@@ -1401,10 +1401,7 @@ test("create and remove deeply nested folder", async () => {
   const tmpDir = await getTmpDir();
   await mkdir(`${tmpDir}/1`);
   const watcher = await createWatcher([tmpDir]);
-  await mkdir(
-    `${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1`,
-    { recursive: true }
-  );
+  await mkdir(`${tmpDir}/1/1/1/1/1/1`, { recursive: true });
   await rm(`${tmpDir}/1`, { recursive: true });
   await writeFile(`${tmpDir}/2.txt`, "");
   await waitForExpect(() => {

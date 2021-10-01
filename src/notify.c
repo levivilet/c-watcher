@@ -37,12 +37,12 @@ int notify_add_watch(const char *fpath) {
 
 void notify_remove_watch(int wd) {
     // return;
-    // printf("RM WATCH %d\n", wd);
+    // fprintf(stderr, "RM WATCH %d\n", wd);
     int status = inotify_rm_watch(fd, wd);
     if (status == -1) {
         // printf("%d\n", wd);
         // printf("%d\n", status);
-        printf("not ok %s\n", strerror(errno));
+        printf("not ok %s %d\n", strerror(errno), wd);
         fprintf(stderr, "Cannot unwatch '%d': %s\n", wd, strerror(errno));
         fflush(stderr);
         exit(EXIT_FAILURE);

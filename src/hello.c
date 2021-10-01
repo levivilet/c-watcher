@@ -159,13 +159,7 @@ static void output_event(const struct inotify_event *event) {
     if (node == NULL) {
         return;
     }
-    /* Print the name of the file. */
-    fflush(stdout);
-    // if()
-    fprintf(stdout, "%s/", node->fpath);
-    // TODO event.len should always be defined
-    if (event->len) fprintf(stdout, "%s ", event->name);
-
+    fprintf(stdout, "%s/%s ", node->fpath, event->name);
     fprintf(stdout, "%s", event_string);
 
     // TODO more efficient buffer handling
