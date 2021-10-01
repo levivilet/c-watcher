@@ -5,6 +5,8 @@ import { join } from "path";
 import pidusage from "pidusage";
 import waitForExpect from "wait-for-expect";
 
+waitForExpect.defaults.timeout = 10_000;
+
 const getStats = async (pid) => {
   const stats = await pidusage(pid);
   return stats;
@@ -139,7 +141,6 @@ test.skip("memory should not grow when moving out folders", async () => {
     expect(watcher.eventCount).toBe(5_000);
   });
   const middleStats1 = await getStats(watcher.pid);
-  // await setTimeout(100);
   for (let i = 0; i < 5_000; i++) {
     await rename(`${tmpDir}/1-${i}`, `${tmpDir2}/1-${i}`);
   }

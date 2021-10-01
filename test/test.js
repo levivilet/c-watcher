@@ -312,10 +312,14 @@ test("folder with greek letters", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await mkdir(`${tmpDir}/Σ Τ Υ Φ Χ Ψ`);
-  await writeFile(`${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt`, "");
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/Σ Τ Υ Φ Χ Ψ ISDIR,CREATE
-${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt CREATE
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt CREATE
 ${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt CLOSE_WRITE
 `);
   });
@@ -488,10 +492,14 @@ test("move in folder, then create file in that folder", async () => {
   await mkdir(`${tmpDir2}/old`);
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/old`, `${tmpDir}/new`);
-  await writeFile(`${tmpDir}/new/abc.txt`, "");
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/new ISDIR,MOVED_TO
-${tmpDir}/new/abc.txt CREATE
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/new/abc.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/new/abc.txt CREATE
 ${tmpDir}/new/abc.txt CLOSE_WRITE
 `);
   });

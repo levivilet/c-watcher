@@ -1,14 +1,4 @@
 #define _GNU_SOURCE
-
-#include <errno.h>
-#include <ftw.h>
-#include <poll.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/inotify.h>
-#include <time.h>
-#include <unistd.h>
-
 // TODO remove unused imports
 #include <errno.h>
 #include <ftw.h>
@@ -28,9 +18,6 @@ typedef struct ListNode {
 } ListNode;
 
 /* globals */
-
-/* result of inotify_init */
-static int fd;
 
 /* structure for mapping wd to directory path */
 static ListNode *head = NULL;
