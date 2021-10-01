@@ -880,9 +880,7 @@ ${tmpDir}/2 ISDIRMOVED_TOMOVE
 
 // TODO test ping pong rename, move folder in and out
 
-// TODO this can fail
-
-test.skip("this can fail", async () => {
+test("folder move race condition", async () => {
   waitForExpect.defaults.timeout = 1000;
   // this tests a very specific bug when a folder is moved in
   // it can happen that the watch for is not yet established
@@ -891,7 +889,7 @@ test.skip("this can fail", async () => {
   // the full path for the event is not known (which is very unusual).
   // Usually the watcher would be removed but since it is not in storage
   // there is no watcher to remove.
-  for (let i = 0; i < 10000; i++) {
+  for (let i = 0; i < 100; i++) {
     const tmpDir = await getTmpDir();
     const tmpDir2 = await getTmpDir();
     await mkdir(`${tmpDir2}/1`);
