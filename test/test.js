@@ -1406,19 +1406,23 @@ ${tmpDir}/1.txt CLOSE_WRITE
   watcher.dispose();
 });
 
-test("move in folder then create folder inside that folder, remove outer folder and create file in inner folder", async () => {
+test("move in folder, then create folder inside that folder, remove outer folder and create file in inner folder", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir2}/1`);
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
+`);
+  });
+  watcher.clear();
   // TODO test with fast creation of nested folder 1/2/3/4/5/6/7/8/9/10/11/12
   await mkdir(`${tmpDir}/1/2`);
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await writeFile(`${tmpDir2}/1/2/3.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
-${tmpDir}/1/2 ISDIR,CREATE
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2 ISDIR,CREATE
 ${tmpDir}/1 ISDIR,MOVED_FROM
 `);
   });
