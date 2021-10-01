@@ -177,7 +177,7 @@ test("create folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await mkdir(`${tmpDir}/a`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a CREATEISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/a ISDIR,CREATE
 `);
   });
   watcher.dispose();
@@ -189,7 +189,7 @@ test("copy folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await exec("cp", ["-r", `${tmpDir}/1`, `${tmpDir}/2`]);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/2 CREATEISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/2 ISDIR,CREATE
 `);
   });
   watcher.dispose();
@@ -201,7 +201,7 @@ test("remove folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rm(`${tmpDir}/a`, { recursive: true });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a DELETEISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/a ISDIR,DELETE
 `);
   });
   watcher.dispose();
@@ -213,7 +213,7 @@ test("remove nested folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rm(`${tmpDir}/a/b`, { recursive: true });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/b DELETEISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/a/b ISDIR,DELETE
 `);
   });
   watcher.dispose();
@@ -226,21 +226,21 @@ test("remove folder - nested deeply", async () => {
   await rm(`${tmpDir}/1`, { recursive: true });
   await waitForExpect(() => {
     expect(watcher.stdout)
-      .toBe(`${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1/1 DELETEISDIR
-${tmpDir}/1/1/1 DELETEISDIR
-${tmpDir}/1/1 DELETEISDIR
-${tmpDir}/1 DELETEISDIR
+      .toBe(`${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1/1 ISDIR,DELETE
+${tmpDir}/1/1 ISDIR,DELETE
+${tmpDir}/1 ISDIR,DELETE
 `);
   });
   watcher.dispose();
@@ -314,7 +314,7 @@ test("folder with greek letters", async () => {
   await mkdir(`${tmpDir}/Σ Τ Υ Φ Χ Ψ`);
   await writeFile(`${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/Σ Τ Υ Φ Χ Ψ CREATEISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/Σ Τ Υ Φ Χ Ψ ISDIR,CREATE
 ${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt CREATE
 ${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt CLOSE_WRITE
 `);
@@ -365,7 +365,7 @@ test("move in - file", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/old.txt`, `${tmpDir}/new.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new.txt MOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/new.txt MOVED_TO
 `);
   });
   watcher.dispose();
@@ -378,7 +378,7 @@ test("move in - folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/old`, `${tmpDir}/new`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIR,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -404,8 +404,8 @@ test("move - file", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir}/old.txt`, `${tmpDir}/new.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old.txt MOVED_FROMMOVE
-${tmpDir}/new.txt MOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/old.txt MOVED_FROM
+${tmpDir}/new.txt MOVED_TO
 `);
   });
   watcher.dispose();
@@ -418,8 +418,8 @@ test("move folder", async () => {
   await rename(`${tmpDir}/old`, `${tmpDir}/new`);
   await writeFile(`${tmpDir}/new/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
-${tmpDir}/new ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIR,MOVED_FROM
+${tmpDir}/new ISDIR,MOVED_TO
 ${tmpDir}/new/abc.txt CREATE
 ${tmpDir}/new/abc.txt CLOSE_WRITE
 `);
@@ -437,8 +437,8 @@ test("move - nested folder", async () => {
   await writeFile(`${tmpDir}/2/1/1/2.txt`, "");
   await writeFile(`${tmpDir}/2/1/1/1/2.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/2 ISDIR,MOVED_TO
 ${tmpDir}/2/2.txt CREATE
 ${tmpDir}/2/2.txt CLOSE_WRITE
 ${tmpDir}/2/1/2.txt CREATE
@@ -460,7 +460,7 @@ test("misc - move in file, then remove file", async () => {
   await rename(`${tmpDir2}/old.txt`, `${tmpDir}/new.txt`);
   await rm(`${tmpDir}/new.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new.txt MOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/new.txt MOVED_TO
 ${tmpDir}/new.txt DELETE
 `);
   });
@@ -475,8 +475,8 @@ test("move in folder, then remove folder", async () => {
   await rename(`${tmpDir2}/old`, `${tmpDir}/new`);
   await rm(`${tmpDir}/new`, { recursive: true });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIRMOVED_TOMOVE
-${tmpDir}/new DELETEISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIR,MOVED_TO
+${tmpDir}/new ISDIR,DELETE
 `);
   });
   watcher.dispose();
@@ -490,7 +490,7 @@ test("move in folder, then create file in that folder", async () => {
   await rename(`${tmpDir2}/old`, `${tmpDir}/new`);
   await writeFile(`${tmpDir}/new/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIR,MOVED_TO
 ${tmpDir}/new/abc.txt CREATE
 ${tmpDir}/new/abc.txt CLOSE_WRITE
 `);
@@ -506,7 +506,7 @@ test("move out folder, then create file in that folder", async () => {
   await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
   await writeFile(`${tmpDir2}/new/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIR,MOVED_FROM
 `);
   });
   watcher.dispose();
@@ -519,13 +519,13 @@ test("move folder in and out multiple times", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROMMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIR,MOVED_FROM
 `);
   });
   watcher.clear();
   await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIR,MOVED_TO
 `);
   });
   watcher.clear();
@@ -545,7 +545,7 @@ test("misc - deeply nested folder", async () => {
     const name = "/1".repeat(i);
     await mkdir(`${tmpDir}${name}`);
     await waitForExpect(() => {
-      expect(watcher.stdout).toBe(`${tmpDir}${name} CREATEISDIR
+      expect(watcher.stdout).toBe(`${tmpDir}${name} ISDIR,CREATE
 `);
       watcher.clear();
     });
@@ -561,46 +561,46 @@ test.skip("misc - watch deeply nested folder (fast)", async () => {
     { recursive: true }
   );
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 CREATEISDIR
-${tmpDir}/1/1 CREATEISDIR
-${tmpDir}/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 CREATEISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,CREATE
+${tmpDir}/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
 `);
   });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIRMOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIR,MOVED_FROM
 `);
   });
   watcher.dispose();
@@ -669,8 +669,8 @@ test("move out folder and move it back in", async () => {
   await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
   await writeFile(`${tmpDir}/b.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/1 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/1 ISDIR,MOVED_TO
 ${tmpDir}/b.txt CREATE
 ${tmpDir}/b.txt CLOSE_WRITE
 `);
@@ -686,12 +686,12 @@ test("rename file multiple times", async () => {
   await rename(`${tmpDir}/2.txt`, `${tmpDir}/3.txt`);
   await rename(`${tmpDir}/3.txt`, `${tmpDir}/4.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1.txt MOVED_FROMMOVE
-${tmpDir}/2.txt MOVED_TOMOVE
-${tmpDir}/2.txt MOVED_FROMMOVE
-${tmpDir}/3.txt MOVED_TOMOVE
-${tmpDir}/3.txt MOVED_FROMMOVE
-${tmpDir}/4.txt MOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1.txt MOVED_FROM
+${tmpDir}/2.txt MOVED_TO
+${tmpDir}/2.txt MOVED_FROM
+${tmpDir}/3.txt MOVED_TO
+${tmpDir}/3.txt MOVED_FROM
+${tmpDir}/4.txt MOVED_TO
 `);
   });
   watcher.dispose();
@@ -705,12 +705,12 @@ test("rename folder multiple times", async () => {
   await rename(`${tmpDir}/2`, `${tmpDir}/3`);
   await rename(`${tmpDir}/3`, `${tmpDir}/4`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2 ISDIRMOVED_TOMOVE
-${tmpDir}/2 ISDIRMOVED_FROMMOVE
-${tmpDir}/3 ISDIRMOVED_TOMOVE
-${tmpDir}/3 ISDIRMOVED_FROMMOVE
-${tmpDir}/4 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/2 ISDIR,MOVED_TO
+${tmpDir}/2 ISDIR,MOVED_FROM
+${tmpDir}/3 ISDIR,MOVED_TO
+${tmpDir}/3 ISDIR,MOVED_FROM
+${tmpDir}/4 ISDIR,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -725,8 +725,8 @@ test("move in folder, move out another folder", async () => {
   await rename(`${tmpDir2}/2`, `${tmpDir}/2`);
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/2 ISDIRMOVED_TOMOVE
-${tmpDir}/1 ISDIRMOVED_FROMMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/2 ISDIR,MOVED_TO
+${tmpDir}/1 ISDIR,MOVED_FROM
 `);
   });
   watcher.dispose();
@@ -741,8 +741,8 @@ test("move out folder, move in another folder", async () => {
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await rename(`${tmpDir2}/2`, `${tmpDir}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/2 ISDIR,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -755,10 +755,10 @@ test("nested rename", async () => {
   await rename(`${tmpDir}/1/2/3/4/5`, `${tmpDir}/1/6`);
   await rename(`${tmpDir}/1/2/3`, `${tmpDir}/1/6/3`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5 ISDIRMOVED_FROMMOVE
-${tmpDir}/1/6 ISDIRMOVED_TOMOVE
-${tmpDir}/1/2/3 ISDIRMOVED_FROMMOVE
-${tmpDir}/1/6/3 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5 ISDIR,MOVED_FROM
+${tmpDir}/1/6 ISDIR,MOVED_TO
+${tmpDir}/1/2/3 ISDIR,MOVED_FROM
+${tmpDir}/1/6/3 ISDIR,MOVED_TO
 `);
   });
   watcher.clear();
@@ -790,8 +790,8 @@ test("rename subtree", async () => {
   await rename(`${tmpDir}/1/2/3/4/5`, `${tmpDir}/1/5`);
   await writeFile(`${tmpDir}/1/5/6/7/a.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5 ISDIRMOVED_FROMMOVE
-${tmpDir}/1/5 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5 ISDIR,MOVED_FROM
+${tmpDir}/1/5 ISDIR,MOVED_TO
 ${tmpDir}/1/5/a.txt CREATE
 ${tmpDir}/1/5/a.txt CLOSE_WRITE
 `);
@@ -817,7 +817,7 @@ test("move out and move folder", async () => {
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await rename(`${tmpDir2}/1`, `${tmpDir2}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
 `);
   });
   watcher.dispose();
@@ -832,9 +832,9 @@ test("move and move out folder", async () => {
   await rename(`${tmpDir}/1`, `${tmpDir}/2`);
   await rename(`${tmpDir}/2`, `${tmpDir2}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2 ISDIRMOVED_TOMOVE
-${tmpDir}/2 ISDIRMOVED_FROMMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/2 ISDIR,MOVED_TO
+${tmpDir}/2 ISDIR,MOVED_FROM
 `);
   });
   watcher.dispose();
@@ -849,9 +849,9 @@ test("move and move in folder", async () => {
   await rename(`${tmpDir}/1`, `${tmpDir}/2`);
   await rename(`${tmpDir2}/3`, `${tmpDir}/3`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2 ISDIRMOVED_TOMOVE
-${tmpDir}/3 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/2 ISDIR,MOVED_TO
+${tmpDir}/3 ISDIR,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -864,14 +864,14 @@ test("move in and move folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
 `);
   });
   watcher.clear();
   await rename(`${tmpDir}/1`, `${tmpDir}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/2 ISDIR,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -884,7 +884,7 @@ test("move in nested folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
 `);
   });
   watcher.clear();
@@ -913,7 +913,7 @@ test("folder move race condition", async () => {
     const watcher = await createWatcher([tmpDir]);
     await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
     await waitForExpect(() => {
-      expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_TOMOVE
+      expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
 `);
     });
     watcher.clear();
@@ -921,9 +921,9 @@ test("folder move race condition", async () => {
     await rename(`${tmpDir}/3`, `${tmpDir2}/4`);
     await writeFile(`${tmpDir2}/4/a.txt`, ``);
     await waitForExpect(() => {
-      expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/3 ISDIRMOVED_TOMOVE
-${tmpDir}/3 ISDIRMOVED_FROMMOVE
+      expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/3 ISDIR,MOVED_TO
+${tmpDir}/3 ISDIR,MOVED_FROM
 `);
     });
     watcher.dispose();
@@ -941,10 +941,10 @@ ${tmpDir}/3 ISDIRMOVED_FROMMOVE
 //   await rename(`${tmpDir}/3`, `${tmpDir2}/4`);
 //   await writeFile(`${tmpDir2}/4/a.txt`, ``);
 //   await waitForExpect(() => {
-//     expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_TOMOVE
-// ${tmpDir}/1 ISDIRMOVED_FROMMOVE
-// ${tmpDir}/3 ISDIRMOVED_TOMOVE
-// ${tmpDir}/3 ISDIRMOVED_FROMMOVE
+//     expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
+// ${tmpDir}/1 ISDIR,MOVED_FROM
+// ${tmpDir}/3 ISDIR,MOVED_TO
+// ${tmpDir}/3 ISDIR,MOVED_FROM
 // `);
 //   });
 //   watcher.dispose();
@@ -959,8 +959,8 @@ test("rename short path to long path", async () => {
     `${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222`
   );
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222 ISDIR,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -978,8 +978,8 @@ test("rename long path to short path", async () => {
   );
   await waitForExpect(() => {
     expect(watcher.stdout)
-      .toBe(`${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222 ISDIRMOVED_FROMMOVE
-${tmpDir}/1 ISDIRMOVED_TOMOVE
+      .toBe(`${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222 ISDIR,MOVED_FROM
+${tmpDir}/1 ISDIR,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -993,12 +993,12 @@ test("renaming folders from top 1/1/1 -> -> 2/1/1 -> 2/3/1 -> 2/3/4", async () =
   await rename(`${tmpDir}/2/1`, `${tmpDir}/2/3`);
   await rename(`${tmpDir}/2/3/1`, `${tmpDir}/2/3/4`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2 ISDIRMOVED_TOMOVE
-${tmpDir}/2/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2/3 ISDIRMOVED_TOMOVE
-${tmpDir}/2/3/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2/3/4 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/2 ISDIR,MOVED_TO
+${tmpDir}/2/1 ISDIR,MOVED_FROM
+${tmpDir}/2/3 ISDIR,MOVED_TO
+${tmpDir}/2/3/1 ISDIR,MOVED_FROM
+${tmpDir}/2/3/4 ISDIR,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -1012,12 +1012,12 @@ test("renaming folders from bottom 1/1/1 -> 1/1/4 -> 1/3/4 -> 2/3/4", async () =
   await rename(`${tmpDir}/1/1`, `${tmpDir}/1/3`);
   await rename(`${tmpDir}/1`, `${tmpDir}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/1/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/1/1/4 ISDIRMOVED_TOMOVE
-${tmpDir}/1/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/1/3 ISDIRMOVED_TOMOVE
-${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1/1/1 ISDIR,MOVED_FROM
+${tmpDir}/1/1/4 ISDIR,MOVED_TO
+${tmpDir}/1/1 ISDIR,MOVED_FROM
+${tmpDir}/1/3 ISDIR,MOVED_TO
+${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/2 ISDIR,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -1031,12 +1031,12 @@ test("renaming folders from middle 1/1/1 -> 1/3/1 -> 2/3/1 -> 2/3/4", async () =
   await rename(`${tmpDir}/1`, `${tmpDir}/2`);
   await rename(`${tmpDir}/2/3/1`, `${tmpDir}/2/3/4`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/1/3 ISDIRMOVED_TOMOVE
-${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2 ISDIRMOVED_TOMOVE
-${tmpDir}/2/3/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2/3/4 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1/1 ISDIR,MOVED_FROM
+${tmpDir}/1/3 ISDIR,MOVED_TO
+${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/2 ISDIR,MOVED_TO
+${tmpDir}/2/3/1 ISDIR,MOVED_FROM
+${tmpDir}/2/3/4 ISDIR,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -1051,9 +1051,9 @@ test("move out child folder, remove parent folder, move child folder back in", a
   await rm(`${tmpDir}/1`, { recursive: true });
   await rename(`${tmpDir2}/2`, `${tmpDir}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/2 ISDIRMOVED_FROMMOVE
-${tmpDir}/1 DELETEISDIR
-${tmpDir}/2 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2 ISDIR,MOVED_FROM
+${tmpDir}/1 ISDIR,DELETE
+${tmpDir}/2 ISDIR,MOVED_TO
 `);
   });
   watcher.clear();
@@ -1074,7 +1074,7 @@ test("replace file with folder", async () => {
   await mkdir(`${tmpDir}/1`);
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/1 DELETE
-${tmpDir}/1 CREATEISDIR
+${tmpDir}/1 ISDIR,CREATE
 `);
   });
   watcher.dispose();
@@ -1087,7 +1087,7 @@ test("replace folder with file", async () => {
   await rm(`${tmpDir}/1`, { recursive: true });
   await writeFile(`${tmpDir}/1`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 DELETEISDIR
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,DELETE
 ${tmpDir}/1 CREATE
 ${tmpDir}/1 CLOSE_WRITE
 `);
@@ -1144,9 +1144,9 @@ test("move out multiple files in parallel", async () => {
     rename(`${tmpDir}/3`, `${tmpDir2}/3`),
   ]);
   await waitForExpect(() => {
-    expect(watcher.stdout).toContain(`${tmpDir}/1 MOVED_FROMMOVE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/2 MOVED_FROMMOVE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/3 MOVED_FROMMOVE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1 MOVED_FROM`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2 MOVED_FROM`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3 MOVED_FROM`);
   });
   watcher.dispose();
 });
@@ -1162,9 +1162,9 @@ test("move out multiple files and folders", async () => {
   await rename(`${tmpDir}/2/3.txt`, `${tmpDir2}/3.txt`);
   await rename(`${tmpDir}/2`, `${tmpDir2}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
-${tmpDir}/2/3.txt MOVED_FROMMOVE
-${tmpDir}/2 ISDIRMOVED_FROMMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+${tmpDir}/2/3.txt MOVED_FROM
+${tmpDir}/2 ISDIR,MOVED_FROM
 `);
   });
   watcher.dispose();
@@ -1389,9 +1389,9 @@ test("move in folder then create folder inside that folder, remove outer folder 
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await writeFile(`${tmpDir2}/1/2/3.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_TOMOVE
-${tmpDir}/1/2 CREATEISDIR
-${tmpDir}/1 ISDIRMOVED_FROMMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
+${tmpDir}/1/2 ISDIR,CREATE
+${tmpDir}/1 ISDIR,MOVED_FROM
 `);
   });
   watcher.dispose();
@@ -1408,8 +1408,8 @@ test("create and remove deeply nested folder", async () => {
   await rm(`${tmpDir}/1`, { recursive: true });
   await writeFile(`${tmpDir}/2.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toContain(`${tmpDir}/1/1 CREATEISDIR`);
-    expect(watcher.stdout).toContain(`${tmpDir}/1 DELETEISDIR`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1/1 ISDIR,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1 ISDIR,DELETE`);
     expect(watcher.stdout).toContain(`${tmpDir}/2.txt CREATE`);
   });
   watcher.dispose();
@@ -1423,7 +1423,7 @@ test("inner watcher should be removed when parent folder is moved out", async ()
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await writeFile(`${tmpDir2}/1/2/3.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_FROMMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
 `);
   });
   watcher.dispose();
@@ -1436,8 +1436,8 @@ test("rename deeply nested folder (https://github.com/inotify-tools/inotify-tool
   await rename(`${tmpDir}/a1`, `${tmpDir}/b1`);
   await writeFile(`${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a1 ISDIRMOVED_FROMMOVE
-${tmpDir}/b1 ISDIRMOVED_TOMOVE
+    expect(watcher.stdout).toBe(`${tmpDir}/a1 ISDIR,MOVED_FROM
+${tmpDir}/b1 ISDIR,MOVED_TO
 ${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt CREATE
 ${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt CLOSE_WRITE
 `);
@@ -1456,7 +1456,7 @@ test("move some files around (https://github.com/inotify-tools/inotify-tools/iss
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/to_move/dir/test_file.txt CREATE
 ${tmpDir}/to_move/dir/test_file.txt CLOSE_WRITE
-${tmpDir}/to_move ISDIRMOVED_FROMMOVE
+${tmpDir}/to_move ISDIR,MOVED_FROM
 `);
   });
   watcher.dispose();

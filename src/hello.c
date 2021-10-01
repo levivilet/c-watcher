@@ -19,6 +19,45 @@ char *moved_from = 0;
 
 FILE *fp;
 
+const char *get_event_string(const struct inotify_event *event) {
+    switch (event->mask) {
+        case /* IN_ISDIR | IN_CREATE */ 1073742080:
+            return "ISDIR,CREATE";
+        case /* IN_ISDIR | IN_MODIFY */ 1073741826:
+            return "ISDIR,MODIFY";
+        case /* IN_ISDIR | IN_OPEN */ 1073741856:
+            return "ISDIR,OPEN";
+        case /* IN_ISDIR | IN_DELETE */ 1073742336:
+            return "ISDIR,DELETE";
+        case /* IN_ISDIR | IN_MOVED_FROM */ 1073741888:
+            return "ISDIR,MOVED_FROM";
+        case /* IN_ISDIR | IN_MOVED_TO */ 1073741952:
+            return "ISDIR,MOVED_TO";
+        case /* IN_ACCESS */ 1:
+            return "ACCESS";
+        case /* IN_ATTRIB */ 4:
+            return "ATTRIB";
+        case /* IN_CLOSE_WRITE */ 8:
+            return "CLOSE_WRITE";
+        case /* IN_CLOSE_NOWRITE */ 16:
+            return "CLOSE_NOWRITE";
+        case /* IN_CREATE */ 256:
+            return "CREATE";
+        case /* IN_DELETE */ 512:
+            return "DELETE";
+        case /* IN_MODIFY */ 2:
+            return "MODIFY";
+        case /* IN_MOVED_FROM */ 64:
+            return "MOVED_FROM";
+        case /* IN_MOVED_TO */ 128:
+            return "MOVED_TO";
+        case /* IN_OPEN */ 32:
+            return "OPEN";
+        default:
+            return 0;
+    }
+}
+
 void full_path(char **fpath, const struct inotify_event *event) {
     ListNode *node = storage_find(event->wd);
     if (asprintf(fpath, "%s/%s", node->fpath, event->name) == -1) {
@@ -109,53 +148,25 @@ static void watch_recursively(const char *dir) {
 }
 
 static void output_event(const struct inotify_event *event) {
-    if (event->mask & IN_IGNORED) {
+    // TODO put this after getting node
+    const char *event_string = get_event_string(event);
+    if (!event_string) {
         return;
     }
-    // printf("before\n");
-    // event_print(event);
-    // printf("after\n");
-    // storage_print();
-    // storage_print();
-    // printf("EVENT\n");
-
-    /* Print the name of the file. */
     ListNode *node = storage_find(event->wd);
     // node can be null if there is a moved out event and
     // then a file create event inside the moved out folder.
     if (node == NULL) {
         return;
     }
-
-    // fprintf(stdout, "%d ", node->wd);
-    // fprintf(stdout, "COOKIE %d ", event->cookie);
-
+    /* Print the name of the file. */
     fflush(stdout);
     // if()
     fprintf(stdout, "%s/", node->fpath);
-
+    // TODO event.len should always be defined
     if (event->len) fprintf(stdout, "%s ", event->name);
 
-    if (event->mask & IN_OPEN) fprintf(stdout, "OPEN");
-    if (event->mask & IN_CLOSE_NOWRITE) fprintf(stdout, "CLOSE_NOWRITE");
-    if (event->mask & IN_CLOSE_WRITE) fprintf(stdout, "CLOSE_WRITE");
-    if (event->mask & IN_ACCESS) fprintf(stdout, "ACCESS");
-    if (event->mask & IN_MODIFY) fprintf(stdout, "MODIFY");
-    if (event->mask & IN_ATTRIB) fprintf(stdout, "ATTRIB");
-    if (event->mask & IN_OPEN) fprintf(stdout, "OPEN");
-    if (event->mask & IN_CREATE) fprintf(stdout, "CREATE");
-    if (event->mask & IN_DELETE) fprintf(stdout, "DELETE");
-    if (event->mask & IN_DELETE_SELF) fprintf(stdout, "DELETE_SELF");
-    if (event->mask & IN_ISDIR) fprintf(stdout, "ISDIR");
-    // if (event->mask & IN_ISDIR) printf("IN_ISDIR");
-    if (event->mask & IN_MOVED_FROM) fprintf(stdout, "MOVED_FROM");
-    if (event->mask & IN_MOVED_TO) fprintf(stdout, "MOVED_TO");
-    if (event->mask & IN_MOVE) fprintf(stdout, "MOVE");
-    // if (event->mask & IN_MODIFY) fprintf(stdout,"MODIFY");
-    // if (event->mask & IN_DELETE_SELF) fprintf(stdout,"DELETESELF");
-    if (event->mask & IN_MOVE_SELF) fprintf(stdout, "MOVE_SELF");
-    if (event->mask & IN_ACCESS) fprintf(stdout, "ACCESS");
-    if (event->mask & IN_IGNORED) fprintf(stdout, "IGNORED");
+    fprintf(stdout, "%s", event_string);
 
     // TODO more efficient buffer handling
 
@@ -331,6 +342,8 @@ static void handle_events(int fd) {
 }
 
 int main(int argc, char *argv[]) {
+    // fprintf(stdout, "%d\n", IN_ISDIR | IN_MOVED_FROM);
+    // fprintf(stdout, "%d\n", IN_ISDIR | IN_MOVED_TO);
     fp = fopen("/tmp/test.txt", "w+");
     // fp = stdout;
 
