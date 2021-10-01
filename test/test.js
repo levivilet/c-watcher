@@ -1394,6 +1394,22 @@ test("inner watcher should be removed when parent folder is moved out", async ()
   watcher.dispose();
 });
 
+test("rename deeply nested folder", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/a1/a2/a3/a4/a5/a6/a7/a8/a9`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/a1`, `${tmpDir}/b1`);
+  await writeFile(`${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a1 ISDIRMOVED_FROMMOVE
+${tmpDir}/b1 ISDIRMOVED_TOMOVE
+${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt CREATE
+${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
 // TODO test move in folder then create folder inside that folder, remove outer folder and create file in inner folder
 
 // TODO test remove lowest wd
