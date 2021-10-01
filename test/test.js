@@ -878,7 +878,25 @@ ${tmpDir}/2 ISDIRMOVED_TOMOVE
 });
 // TODO test move, move-in, move-out with nested folder
 
-// TODO test ping pong rename, move folder in and out
+test("move in nested folder", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir2}/1/2/3/4/5/6/7/8/9`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIRMOVED_TOMOVE
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/1/2/3/4/5/6/7/8/9/new.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5/6/7/8/9/new.txt CREATE
+${tmpDir}/1/2/3/4/5/6/7/8/9/new.txt CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
 
 test("folder move race condition", async () => {
   waitForExpect.defaults.timeout = 1000;
