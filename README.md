@@ -23,22 +23,22 @@ The following events can be emitted:
 
 | Name           | Description                   |
 | -------------- | ----------------------------- |
-| CREATE_DIR     | directory is created          |
-| MODIFY_DIR     | directory is modified         |
-| OPEN_DIR       | directory is opened           |
-| DELETE_DIR     | directory is deleted          |
-| MOVED_FROM_DIR | directory moves in            |
-| MOVED_TO_DIR   | directory moves out           |
-| ACCESS         | file is accessed              |
-| ATTRIB         | file attribute is changed     |
-| CLOSE_WRITE    | file is written to and closed |
-| CLOSE_NOWRITE  | file is closed                |
-| CREATE         | file is created               |
-| DELETE         | file is deleted               |
-| MODIFY         | file is modified              |
-| MOVED_FROM     | file moves in                 |
-| MOVED_TO       | file moves out                |
-| OPEN           | file is opened                |
+| CREATE_DIR     | Directory is created          |
+| MODIFY_DIR     | Directory is modified         |
+| OPEN_DIR       | Directory is opened           |
+| DELETE_DIR     | Directory is deleted          |
+| MOVED_FROM_DIR | Directory moves in            |
+| MOVED_TO_DIR   | Directory moves out           |
+| ACCESS         | File is accessed              |
+| ATTRIB         | File attribute is changed     |
+| CLOSE_WRITE    | File is written to and closed |
+| CLOSE_NOWRITE  | File is closed                |
+| CREATE         | File is created               |
+| DELETE         | File is deleted               |
+| MODIFY         | File is modified              |
+| MOVED_FROM     | File moves in                 |
+| MOVED_TO       | File moves out                |
+| OPEN           | File is opened                |
 
 ## Caveats
 
