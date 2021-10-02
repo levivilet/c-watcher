@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import {
+  appendFile,
   chmod,
   copyFile,
   mkdir,
@@ -109,10 +110,9 @@ test("modify file", async () => {
   const tmpDir = await getTmpDir();
   await writeFile(`${tmpDir}/abc.txt`, "");
   const watcher = await createWatcher([tmpDir]);
-  await writeFile(`${tmpDir}/abc.txt`, "abc");
+  await appendFile(`${tmpDir}/abc.txt`, "abc");
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/abc.txt MODIFY
-${tmpDir}/abc.txt MODIFY
 ${tmpDir}/abc.txt CLOSE_WRITE
 `);
   });
