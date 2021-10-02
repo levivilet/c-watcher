@@ -8,4 +8,4 @@ There are race conditions in the recursive directory watching code which can cau
 
 Workaround: Walk each created directory recursively and emit a synthetic create event for each visited dirent.
 
-It will break when creating many folders fast (e.g. creating 50000 folders)
+It will break when creating many folders fast (e.g. creating 50000 folders) since the inotify event queue will overflow.
