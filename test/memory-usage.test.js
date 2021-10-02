@@ -53,7 +53,7 @@ beforeAll(() => {
   waitForExpect.defaults.timeout = 10_000;
 });
 
-test.skip("memory should stay the same when adding files", async () => {
+test("memory should stay the same when adding files", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const initialStats = await getStats(watcher.pid);
@@ -68,7 +68,7 @@ test.skip("memory should stay the same when adding files", async () => {
   watcher.dispose();
 }, 20_000);
 
-test.skip("memory should not grow when adding and removing folders", async () => {
+test("memory should not grow when adding and removing folders", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const initialStats = await getStats(watcher.pid);
@@ -133,7 +133,7 @@ test.skip("memory should not grow when adding and removing folders", async () =>
   watcher.dispose();
 }, 40_000);
 
-test.skip("memory should not grow when moving out folders", async () => {
+test("memory should not grow when moving out folders", async () => {
   const RUNS = 5_000;
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
