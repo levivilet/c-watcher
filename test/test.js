@@ -311,43 +311,43 @@ ${tmpDir}/🗺️,CLOSE_WRITE
   watcher.dispose();
 });
 
-test.skip("folder with greek letters", async () => {
+test("folder with greek letters", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await mkdir(`${tmpDir}/Σ Τ Υ Φ Χ Ψ`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/Σ Τ Υ Φ Χ Ψ,"ISDIR,CREATE"
+    expect(watcher.stdout).toBe(`"${tmpDir}/Σ Τ Υ Φ Χ Ψ","ISDIR,CREATE"
 `);
   });
   watcher.clear();
   await writeFile(`${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt CREATE
-${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`"${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt",CREATE
+"${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt",CLOSE_WRITE
 `);
   });
   watcher.dispose();
 });
 
-test.skip("file with newline", async () => {
+test("file with newline", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a\nb\nc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/"a\nb\nc.txt",CREATE
-${tmpDir}/"a\nb\nc.txt",CLOSE_WRITE
+    expect(watcher.stdout).toBe(`"${tmpDir}/a\nb\nc.txt",CREATE
+"${tmpDir}/a\nb\nc.txt",CLOSE_WRITE
 `);
   });
   watcher.dispose();
 });
 
-test.skip("file with quotes", async () => {
+test("file with quotes", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a"b"c.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a"b"c.txt,CREATE
-${tmpDir}/a"b"c.txt,CLOSE_WRITE
+    expect(watcher.stdout).toBe(`"${tmpDir}/a""b""c.txt",CREATE
+"${tmpDir}/a""b""c.txt",CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -906,7 +906,7 @@ ${tmpDir}/1/2/3/4/5/6/7/8/9/new.txt,CLOSE_WRITE
   watcher.dispose();
 });
 
-test.skip("folder move race condition", async () => {
+test("folder move race condition", async () => {
   waitForExpect.defaults.timeout = 100;
   // this tests a very specific bug when a folder is moved in
   // it can happen that the watch for is not yet established
