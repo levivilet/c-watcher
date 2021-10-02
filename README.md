@@ -1,6 +1,6 @@
 # c watcher
 
-Recursive file watcher for linux similar to `inotifywait`.
+Recursive file watcher for linux similar to [inotifywait](https://github.com/inotify-tools/inotify-tools).
 
 The focus of this project is on low memory usage and performance for recursively watching folders using the inotify api.
 
