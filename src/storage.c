@@ -1,15 +1,6 @@
-#define _GNU_SOURCE
-// TODO remove unused imports
-#include <errno.h>
-#include <ftw.h>
-#include <poll.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/inotify.h>
-#include <time.h>
-#include <unistd.h>
 
 typedef struct ListNode {
     char *fpath;
