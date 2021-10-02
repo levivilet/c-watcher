@@ -58,23 +58,13 @@ const createWatcher = async (args = [], options = {}) => {
 const main = async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
-  const watcher = await createWatcher([tmpDir]);
-  const initialStats = await getStats(watcher.pid);
-  for (let i = 0; i < 100; i++) {
-    await mkdir(`${tmpDir}/${i}`);
-  }
-  await waitForExpect(() => {
-    const count = watcher.stdout.split("\n").length;
-    if (count !== 101) {
-      // console.info("does not match", count);
-      throw new Error(`mismatch ${count}`);
-    }
-    console.info("does match");
-  }, 20_000);
-  // await setTimeout(100);
-  for (let i = 0; i < 2; i++) {
-    await rename(`${tmpDir}/${i}`, `${tmpDir2}/${i}`);
-  }
+  const s = performance.now();
+  const watcher = await createWatcher([
+    `/home/simon/.cache/repos/watcher-memory-usage/react`,
+  ]);
+  const e = performance.now();
+  console.log(e - s);
+  // const initialStats = await getStats(watcher.pid);
 };
 
 main();

@@ -238,6 +238,11 @@ static void adjust_watchers(const struct inotify_event *event) {
         // printf("%s\n", event->name);
     }
 
+    if (event->mask & IN_Q_OVERFLOW) {
+        fprintf(stderr, "Inotify event queue overflow.\n");
+        exit(EXIT_FAILURE);
+    }
+
     // if (event->mask & IN_DELETE) {
     //     printf("delete %d\n", event->wd);
     //     char *fpath;

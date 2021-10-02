@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import { createWriteStream } from "fs";
 import { mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -16,14 +17,21 @@ export const getTmpDir = () => {
 /**
  *
  * @param {readonly string[]} args
- * @param {import('child_process').SpawnOptions} options
+ * @param {any} options
  * @returns
  */
 export const createWatcher = async (args = [], options = {}) => {
   const child = spawn("./hello", args, options);
   let result = "";
-  child.stdout.on("data", (data) => {
-    result += data.toString();
+  if (options.pipe) {
+    child.stdout.pipe(createWriteStream("./out.txt"));
+  } else {
+    child.stdout.on("data", (data) => {
+      result += data.toString();
+    });
+  }
+  child.on("exit", () => {
+    console.info("exit");
   });
   await new Promise((resolve) => {
     const handleData = (data) => {
