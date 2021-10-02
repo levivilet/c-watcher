@@ -14,6 +14,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import waitForExpect from "wait-for-expect";
 import execa from "execa";
+import csv from "csv-parser";
 
 const exec = async (file, args) => {
   await execa(file, args);
@@ -26,11 +27,10 @@ const getTmpDir = () => {
 /**
  *
  * @param {readonly string[]} args
- * @param {import('child_process').SpawnOptions} options
  * @returns
  */
-const createWatcher = async (args = [], options = {}) => {
-  const child = spawn("./hello", args, options);
+const createWatcher = async (args = []) => {
+  const child = spawn("./hello", args);
   let result = "";
   child.stdout.on("data", (data) => {
     result += data.toString();
@@ -54,6 +54,43 @@ const createWatcher = async (args = [], options = {}) => {
     },
     clear() {
       result = "";
+    },
+  };
+};
+
+/**
+ *
+ * @param {readonly string[]} args
+ * @returns
+ */
+const createCsvWatcher = async (args = []) => {
+  const child = spawn("./hello", args);
+  const result = [];
+  child.stdout
+    .pipe(
+      csv({
+        headers: ["path", "operation"],
+      })
+    )
+    .on("data", (data) => {
+      result.push(data);
+    });
+  await new Promise((resolve) => {
+    const handleData = (data) => {
+      if (data.toString().includes("Watches established.")) {
+        child.stderr.off("data", handleData);
+        resolve();
+      }
+    };
+    child.stderr.on("data", handleData);
+  });
+
+  return {
+    get stdout() {
+      return result;
+    },
+    dispose() {
+      child.kill();
     },
   };
 };
@@ -275,6 +312,25 @@ test("file with spaces", async () => {
   watcher.dispose();
 });
 
+test("csvWatcher: file with spaces", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createCsvWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a b c.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toEqual([
+      {
+        operation: "CREATE",
+        path: `${tmpDir}/a b c.txt`,
+      },
+      {
+        operation: "CLOSE_WRITE",
+        path: `${tmpDir}/a b c.txt`,
+      },
+    ]);
+  });
+  watcher.dispose();
+});
+
 test("file with comma", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
@@ -283,6 +339,25 @@ test("file with comma", async () => {
     expect(watcher.stdout).toBe(`"${tmpDir}/a,b,c.txt",CREATE
 "${tmpDir}/a,b,c.txt",CLOSE_WRITE
 `);
+  });
+  watcher.dispose();
+});
+
+test("csvWatcher: file with comma", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createCsvWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a,b,c.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toEqual([
+      {
+        operation: "CREATE",
+        path: `${tmpDir}/a,b,c.txt`,
+      },
+      {
+        operation: "CLOSE_WRITE",
+        path: `${tmpDir}/a,b,c.txt`,
+      },
+    ]);
   });
   watcher.dispose();
 });
@@ -307,6 +382,25 @@ test("file with emoji", async () => {
     expect(watcher.stdout).toBe(`${tmpDir}/🗺️,CREATE
 ${tmpDir}/🗺️,CLOSE_WRITE
 `);
+  });
+  watcher.dispose();
+});
+
+test("csvWatcher: file with emoji", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createCsvWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/🗺️`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toEqual([
+      {
+        operation: "CREATE",
+        path: `${tmpDir}/🗺️`,
+      },
+      {
+        operation: "CLOSE_WRITE",
+        path: `${tmpDir}/🗺️`,
+      },
+    ]);
   });
   watcher.dispose();
 });
@@ -341,6 +435,25 @@ test("file with newline", async () => {
   watcher.dispose();
 });
 
+test("csvWatcher: file with newline", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createCsvWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a\nb\nc.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toEqual([
+      {
+        operation: "CREATE",
+        path: `${tmpDir}/a\nb\nc.txt`,
+      },
+      {
+        operation: "CLOSE_WRITE",
+        path: `${tmpDir}/a\nb\nc.txt`,
+      },
+    ]);
+  });
+  watcher.dispose();
+});
+
 test("file with quotes", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
@@ -349,6 +462,25 @@ test("file with quotes", async () => {
     expect(watcher.stdout).toBe(`"${tmpDir}/a""b""c.txt",CREATE
 "${tmpDir}/a""b""c.txt",CLOSE_WRITE
 `);
+  });
+  watcher.dispose();
+});
+
+test("csvWatcher: file with quotes", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createCsvWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a"b"c.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toEqual([
+      {
+        operation: "CREATE",
+        path: `${tmpDir}/a"b"c.txt`,
+      },
+      {
+        operation: "CLOSE_WRITE",
+        path: `${tmpDir}/a"b"c.txt`,
+      },
+    ]);
   });
   watcher.dispose();
 });
