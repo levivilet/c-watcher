@@ -3,8 +3,8 @@
 #include <string.h>
 
 bool csv_needs_escape(const char* str) {
-    int len = strlen(str);
-    for (int i = 0; i < len; i++) {
+    size_t i = 0;
+    while (str[i++] != '\0') {
         switch (str[i]) {
             case '"':
             case ',':
