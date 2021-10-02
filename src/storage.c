@@ -8,12 +8,7 @@ typedef struct ListNode {
     struct ListNode *next;
 } ListNode;
 
-/* globals */
-
-/* structure for mapping wd to directory path */
 static ListNode *head = NULL;
-
-/* end globals */
 
 void storage_print(void *out) {
     ListNode *current = head;
