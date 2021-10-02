@@ -1,8 +1,11 @@
 #include <errno.h>
+#include <ftw.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/inotify.h>
+#include <time.h>
 #include <unistd.h>
 
 int fd = -1;
@@ -10,6 +13,8 @@ int fd = -1;
 void notify_init() {
     fd = inotify_init1(IN_NONBLOCK);
     if (fd == -1) {
+        fprintf(stdout, "inotify init error %s\n", strerror(errno));
+        fflush(stdout);
         perror("inotify_init1");
         exit(EXIT_FAILURE);
     }

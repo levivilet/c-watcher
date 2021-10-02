@@ -10,6 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "csv.h"
 #include "notify.h"
 #include "storage.h"
 
@@ -20,17 +21,17 @@ char *moved_from = 0;
 const char *get_event_string(const struct inotify_event *event) {
     switch (event->mask) {
         case /* IN_ISDIR | IN_CREATE */ 1073742080:
-            return "ISDIR,CREATE";
+            return "\"ISDIR,CREATE\"";
         case /* IN_ISDIR | IN_MODIFY */ 1073741826:
-            return "ISDIR,MODIFY";
+            return "\"ISDIR,MODIFY\"";
         case /* IN_ISDIR | IN_OPEN */ 1073741856:
-            return "ISDIR,OPEN";
+            return "\"ISDIR,OPEN\"";
         case /* IN_ISDIR | IN_DELETE */ 1073742336:
-            return "ISDIR,DELETE";
+            return "\"ISDIR,DELETE\"";
         case /* IN_ISDIR | IN_MOVED_FROM */ 1073741888:
-            return "ISDIR,MOVED_FROM";
+            return "\"ISDIR,MOVED_FROM\"";
         case /* IN_ISDIR | IN_MOVED_TO */ 1073741952:
-            return "ISDIR,MOVED_TO";
+            return "\"ISDIR,MOVED_TO\"";
         case /* IN_ACCESS */ 1:
             return "ACCESS";
         case /* IN_ATTRIB */ 4:
@@ -143,12 +144,18 @@ static void output_event(const struct inotify_event *event) {
     if (node == NULL) {
         return;
     }
-    fprintf(stdout, "%s/%s ", node->fpath, event->name);
-    fprintf(stdout, "%s", event_string);
-
+    if (csv_needs_escape(node->fpath) || csv_needs_escape(event->name)) {
+        char *fpath;
+        char *escaped;
+        full_path(&fpath, event);
+        csv_escape(&escaped, fpath);
+        fprintf(stdout, "%s,%s\n", escaped, event_string);
+        free(escaped);
+        free(fpath);
+    } else {
+        fprintf(stdout, "%s/%s,%s\n", node->fpath, event->name, event_string);
+    }
     // TODO more efficient buffer handling
-
-    fprintf(stdout, "\n");
     fflush(stdout);
 }
 
@@ -239,6 +246,8 @@ static void adjust_watchers(const struct inotify_event *event) {
     }
 
     if (event->mask & IN_Q_OVERFLOW) {
+        fprintf(stdout, "queue overflow\n");
+        fflush(stdout);
         fprintf(stderr, "Inotify event queue overflow.\n");
         exit(EXIT_FAILURE);
     }
@@ -316,10 +325,11 @@ static void handle_events(int fd) {
         // storage_print(fp);
         // printf("done\n");
     }
-    fflush(stdout);
+    // fflush(stdout);
 }
 
 int main(int argc, char *argv[]) {
+    // printf("hello 1\n");
     // fprintf(stdout, "%d\n", IN_ISDIR | IN_MOVED_FROM);
     // fprintf(stdout, "%d\n", IN_ISDIR | IN_MOVED_TO);
     // fp = fopen("/tmp/test.txt", "w+");
@@ -327,6 +337,7 @@ int main(int argc, char *argv[]) {
 
     if (argc < 2) {
         printf("Usage: %s PATH [PATH ...]\n", argv[0]);
+        fflush(stdout);
         exit(EXIT_FAILURE);
     }
 

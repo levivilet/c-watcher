@@ -5,11 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --watch \"src/**\" --ext \"c\"  --exec \"gcc  src/storage.c src/notify.c src/hello.c -o hello && ./hello ./playground\"",
-    "build": "gcc  src/storage.c src/notify.c src/hello.c -o hello",
-    "nftw": "nodemon --watch src/nftw.c --exec \"gcc src/nftw.c && ./a.out ./playground\"",
-    "watch": "nodemon --watch src/watch.c --exec \"gcc src/watch.c && ./a.out ./playground\"",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
+    "dev": "nodemon --watch \"src/**\" --ext \"c\"  --exec \"gcc  src/csv.c src/storage.c src/notify.c src/hello.c -o hello && ./hello ./playground\"",
+    "build": "gcc  src/csv.c src/storage.c src/notify.c src/hello.c -o hello",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --forceExit",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
   },
   "keywords": [],

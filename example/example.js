@@ -29,6 +29,9 @@ const createWatcher = async (args = [], options = {}) => {
     console.log(data.toString());
     result += data.toString();
   });
+  child.on("exit", (code) => {
+    console.log("exit", code);
+  });
   await new Promise((resolve) => {
     const handleData = (data) => {
       if (data.toString().includes("Watches established.")) {
@@ -57,13 +60,11 @@ const createWatcher = async (args = [], options = {}) => {
 
 const main = async () => {
   const tmpDir = await getTmpDir();
-  const tmpDir2 = await getTmpDir();
-  const s = performance.now();
-  const watcher = await createWatcher([
-    `/home/simon/.cache/repos/watcher-memory-usage/react`,
-  ]);
-  const e = performance.now();
-  console.log(e - s);
+  const watcher = await createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a b c.txt`, "");
+  console.log("watching");
+  // const e = performance.now();
+  // console.log(e - s);
   // const initialStats = await getStats(watcher.pid);
 };
 

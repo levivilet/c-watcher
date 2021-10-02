@@ -19,8 +19,6 @@ const exec = async (file, args) => {
   await execa(file, args);
 };
 
-waitForExpect.defaults.timeout = 101;
-
 const getTmpDir = () => {
   return mkdtemp(join(tmpdir(), "foo-"));
 };
@@ -60,6 +58,10 @@ const createWatcher = async (args = [], options = {}) => {
   };
 };
 
+beforeAll(() => {
+  waitForExpect.defaults.timeout = 101;
+});
+
 test("spawn", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
@@ -71,8 +73,8 @@ test("create file", async () => {
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt CREATE
-${tmpDir}/abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt,CREATE
+${tmpDir}/abc.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -84,8 +86,8 @@ test("create file - nested", async () => {
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt CREATE
-${tmpDir}/a/abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt,CREATE
+${tmpDir}/a/abc.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -97,10 +99,10 @@ test("create file - multiple", async () => {
   await writeFile(`${tmpDir}/1.txt`, "");
   await writeFile(`${tmpDir}/2.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1.txt CREATE
-${tmpDir}/1.txt CLOSE_WRITE
-${tmpDir}/2.txt CREATE
-${tmpDir}/2.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/1.txt,CREATE
+${tmpDir}/1.txt,CLOSE_WRITE
+${tmpDir}/2.txt,CREATE
+${tmpDir}/2.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -112,8 +114,8 @@ test("modify file", async () => {
   const watcher = await createWatcher([tmpDir]);
   await appendFile(`${tmpDir}/abc.txt`, "abc");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt MODIFY
-${tmpDir}/abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt,MODIFY
+${tmpDir}/abc.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -126,8 +128,8 @@ test("modify file - nested", async () => {
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt MODIFY
-${tmpDir}/a/abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt,MODIFY
+${tmpDir}/a/abc.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -139,10 +141,10 @@ test("copy file", async () => {
   const watcher = await createWatcher([tmpDir]);
   await copyFile(`${tmpDir}/1.txt`, `${tmpDir}/2.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/2.txt CREATE
-${tmpDir}/2.txt MODIFY
-${tmpDir}/2.txt ATTRIB
-${tmpDir}/2.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/2.txt,CREATE
+${tmpDir}/2.txt,MODIFY
+${tmpDir}/2.txt,ATTRIB
+${tmpDir}/2.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -154,7 +156,7 @@ test("remove file", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rm(`${tmpDir}/abc.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt,DELETE
 `);
   });
   watcher.dispose();
@@ -167,7 +169,7 @@ test("remove file - nested", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rm(`${tmpDir}/a/abc.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/a/abc.txt,DELETE
 `);
   });
   watcher.dispose();
@@ -178,7 +180,7 @@ test("create folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await mkdir(`${tmpDir}/a`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a ISDIR,CREATE
+    expect(watcher.stdout).toBe(`${tmpDir}/a,"ISDIR,CREATE"
 `);
   });
   watcher.dispose();
@@ -190,7 +192,7 @@ test("copy folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await exec("cp", ["-r", `${tmpDir}/1`, `${tmpDir}/2`]);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/2 ISDIR,CREATE
+    expect(watcher.stdout).toBe(`${tmpDir}/2,"ISDIR,CREATE"
 `);
   });
   watcher.dispose();
@@ -202,7 +204,7 @@ test("remove folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rm(`${tmpDir}/a`, { recursive: true });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a ISDIR,DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/a,"ISDIR,DELETE"
 `);
   });
   watcher.dispose();
@@ -214,7 +216,7 @@ test("remove nested folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rm(`${tmpDir}/a/b`, { recursive: true });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/b ISDIR,DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/a/b,"ISDIR,DELETE"
 `);
   });
   watcher.dispose();
@@ -227,71 +229,71 @@ test("remove folder - nested deeply", async () => {
   await rm(`${tmpDir}/1`, { recursive: true });
   await waitForExpect(() => {
     expect(watcher.stdout)
-      .toBe(`${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1/1 ISDIR,DELETE
-${tmpDir}/1/1 ISDIR,DELETE
-${tmpDir}/1 ISDIR,DELETE
+      .toBe(`${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1/1,"ISDIR,DELETE"
+${tmpDir}/1/1,"ISDIR,DELETE"
+${tmpDir}/1,"ISDIR,DELETE"
 `);
   });
   watcher.dispose();
 });
 
-test("misc - add and remove file", async () => {
+test("add and remove file", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/abc.txt`, "");
   await rm(`${tmpDir}/abc.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt CREATE
-${tmpDir}/abc.txt CLOSE_WRITE
-${tmpDir}/abc.txt DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/abc.txt,CREATE
+${tmpDir}/abc.txt,CLOSE_WRITE
+${tmpDir}/abc.txt,DELETE
 `);
   });
   watcher.dispose();
 });
 
-test("misc - file with spaces", async () => {
+test("file with spaces", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a b c.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a b c.txt CREATE
-${tmpDir}/a b c.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`"${tmpDir}/a b c.txt",CREATE
+"${tmpDir}/a b c.txt",CLOSE_WRITE
 `);
   });
   watcher.dispose();
 });
 
-test("misc - file with comma", async () => {
+test("file with comma", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a,b,c.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a,b,c.txt CREATE
-${tmpDir}/a,b,c.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`"${tmpDir}/a,b,c.txt",CREATE
+"${tmpDir}/a,b,c.txt",CLOSE_WRITE
 `);
   });
   watcher.dispose();
 });
 
-test("misc - file with unicode", async () => {
+test("file with unicode", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/は`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/は CREATE
-${tmpDir}/は CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/は,CREATE
+${tmpDir}/は,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -302,19 +304,19 @@ test("file with emoji", async () => {
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/🗺️`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/🗺️ CREATE
-${tmpDir}/🗺️ CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/🗺️,CREATE
+${tmpDir}/🗺️,CLOSE_WRITE
 `);
   });
   watcher.dispose();
 });
 
-test("folder with greek letters", async () => {
+test.skip("folder with greek letters", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await mkdir(`${tmpDir}/Σ Τ Υ Φ Χ Ψ`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/Σ Τ Υ Φ Χ Ψ ISDIR,CREATE
+    expect(watcher.stdout).toBe(`${tmpDir}/Σ Τ Υ Φ Χ Ψ,"ISDIR,CREATE"
 `);
   });
   watcher.clear();
@@ -327,37 +329,37 @@ ${tmpDir}/Σ Τ Υ Φ Χ Ψ/1.txt CLOSE_WRITE
   watcher.dispose();
 });
 
-test("misc - file with newline", async () => {
+test.skip("file with newline", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a\nb\nc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a\nb\nc.txt CREATE
-${tmpDir}/a\nb\nc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/"a\nb\nc.txt",CREATE
+${tmpDir}/"a\nb\nc.txt",CLOSE_WRITE
 `);
   });
   watcher.dispose();
 });
 
-test("misc - file with quotes", async () => {
+test.skip("file with quotes", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/a"b"c.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a"b"c.txt CREATE
-${tmpDir}/a"b"c.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a"b"c.txt,CREATE
+${tmpDir}/a"b"c.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
 });
 
-test("misc - file with dot at start", async () => {
+test("file with dot at start", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   await writeFile(`${tmpDir}/.abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/.abc.txt CREATE
-${tmpDir}/.abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/.abc.txt,CREATE
+${tmpDir}/.abc.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -370,7 +372,7 @@ test("move in - file", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/old.txt`, `${tmpDir}/new.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new.txt MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/new.txt,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -383,7 +385,7 @@ test("move in - folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/old`, `${tmpDir}/new`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/new,"ISDIR,MOVED_TO"
 `);
   });
   watcher.dispose();
@@ -409,8 +411,8 @@ test("move - file", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir}/old.txt`, `${tmpDir}/new.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old.txt MOVED_FROM
-${tmpDir}/new.txt MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/old.txt,MOVED_FROM
+${tmpDir}/new.txt,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -423,10 +425,10 @@ test("move folder", async () => {
   await rename(`${tmpDir}/old`, `${tmpDir}/new`);
   await writeFile(`${tmpDir}/new/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIR,MOVED_FROM
-${tmpDir}/new ISDIR,MOVED_TO
-${tmpDir}/new/abc.txt CREATE
-${tmpDir}/new/abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/old,"ISDIR,MOVED_FROM"
+${tmpDir}/new,"ISDIR,MOVED_TO"
+${tmpDir}/new/abc.txt,CREATE
+${tmpDir}/new/abc.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -442,16 +444,16 @@ test("move - nested folder", async () => {
   await writeFile(`${tmpDir}/2/1/1/2.txt`, "");
   await writeFile(`${tmpDir}/2/1/1/1/2.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/2 ISDIR,MOVED_TO
-${tmpDir}/2/2.txt CREATE
-${tmpDir}/2/2.txt CLOSE_WRITE
-${tmpDir}/2/1/2.txt CREATE
-${tmpDir}/2/1/2.txt CLOSE_WRITE
-${tmpDir}/2/1/1/2.txt CREATE
-${tmpDir}/2/1/1/2.txt CLOSE_WRITE
-${tmpDir}/2/1/1/1/2.txt CREATE
-${tmpDir}/2/1/1/1/2.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2,"ISDIR,MOVED_TO"
+${tmpDir}/2/2.txt,CREATE
+${tmpDir}/2/2.txt,CLOSE_WRITE
+${tmpDir}/2/1/2.txt,CREATE
+${tmpDir}/2/1/2.txt,CLOSE_WRITE
+${tmpDir}/2/1/1/2.txt,CREATE
+${tmpDir}/2/1/1/2.txt,CLOSE_WRITE
+${tmpDir}/2/1/1/1/2.txt,CREATE
+${tmpDir}/2/1/1/1/2.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -465,8 +467,8 @@ test("misc - move in file, then remove file", async () => {
   await rename(`${tmpDir2}/old.txt`, `${tmpDir}/new.txt`);
   await rm(`${tmpDir}/new.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new.txt MOVED_TO
-${tmpDir}/new.txt DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/new.txt,MOVED_TO
+${tmpDir}/new.txt,DELETE
 `);
   });
   watcher.dispose();
@@ -480,8 +482,8 @@ test("move in folder, then remove folder", async () => {
   await rename(`${tmpDir2}/old`, `${tmpDir}/new`);
   await rm(`${tmpDir}/new`, { recursive: true });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIR,MOVED_TO
-${tmpDir}/new ISDIR,DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/new,"ISDIR,MOVED_TO"
+${tmpDir}/new,"ISDIR,DELETE"
 `);
   });
   watcher.dispose();
@@ -494,14 +496,14 @@ test("move in folder, then create file in that folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/old`, `${tmpDir}/new`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/new,"ISDIR,MOVED_TO"
 `);
   });
   watcher.clear();
   await writeFile(`${tmpDir}/new/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/new/abc.txt CREATE
-${tmpDir}/new/abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/new/abc.txt,CREATE
+${tmpDir}/new/abc.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -515,7 +517,7 @@ test("move out folder, then create file in that folder", async () => {
   await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
   await writeFile(`${tmpDir2}/new/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIR,MOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/old,"ISDIR,MOVED_FROM"
 `);
   });
   watcher.dispose();
@@ -528,20 +530,20 @@ test("move folder in and out multiple times", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir}/old`, `${tmpDir2}/new`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIR,MOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/old,"ISDIR,MOVED_FROM"
 `);
   });
   watcher.clear();
   await rename(`${tmpDir2}/new`, `${tmpDir}/old`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/old,"ISDIR,MOVED_TO"
 `);
   });
   watcher.clear();
   await writeFile(`${tmpDir}/old/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old/abc.txt CREATE
-${tmpDir}/old/abc.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/old/abc.txt,CREATE
+${tmpDir}/old/abc.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -554,7 +556,7 @@ test("misc - deeply nested folder", async () => {
     const name = "/1".repeat(i);
     await mkdir(`${tmpDir}${name}`);
     await waitForExpect(() => {
-      expect(watcher.stdout).toBe(`${tmpDir}${name} ISDIR,CREATE
+      expect(watcher.stdout).toBe(`${tmpDir}${name},"ISDIR,CREATE"
 `);
       watcher.clear();
     });
@@ -570,59 +572,59 @@ test.skip("misc - watch deeply nested folder (fast)", async () => {
     { recursive: true }
   );
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,CREATE
-${tmpDir}/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
-${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1 ISDIR,CREATE
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,CREATE"
+${tmpDir}/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
+${tmpDir}/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1/1,"ISDIR,CREATE"
 `);
   });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/old ISDIR,MOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/old,"ISDIR,MOVED_FROM"
 `);
   });
   watcher.dispose();
 });
 
-test("misc - setup watchers for each folder inside deeply nested folder", async () => {
+test("setup watchers for each folder inside deeply nested folder", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
   const count = 17;
   await mkdir(`${tmpDir}${"/1".repeat(count)}`, { recursive: true });
   await writeFile(`${tmpDir}/abc.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toContain(`${tmpDir}/abc.txt CREATE
+    expect(watcher.stdout).toContain(`${tmpDir}/abc.txt,CREATE
 `);
   });
   watcher.clear();
@@ -630,8 +632,8 @@ test("misc - setup watchers for each folder inside deeply nested folder", async 
     const name = `1/`.repeat(i) + "2";
     await writeFile(`${tmpDir}/${name}`, "");
     await waitForExpect(() => {
-      expect(watcher.stdout).toBe(`${tmpDir}/${name} CREATE
-${tmpDir}/${name} CLOSE_WRITE
+      expect(watcher.stdout).toBe(`${tmpDir}/${name},CREATE
+${tmpDir}/${name},CLOSE_WRITE
 `);
     });
     watcher.clear();
@@ -645,7 +647,7 @@ test("change file attributes", async () => {
   const watcher = await createWatcher([tmpDir]);
   await chmod(`${tmpDir}/1`, "555");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ATTRIB
+    expect(watcher.stdout).toBe(`${tmpDir}/1,ATTRIB
 `);
   });
   watcher.dispose();
@@ -658,9 +660,9 @@ test("misc - remove and recreate file", async () => {
   await rm(`${tmpDir}/1`);
   await writeFile(`${tmpDir}/1`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 DELETE
-${tmpDir}/1 CREATE
-${tmpDir}/1 CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/1,DELETE
+${tmpDir}/1,CREATE
+${tmpDir}/1,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -676,10 +678,10 @@ test("move out folder and move it back in", async () => {
   await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
   await writeFile(`${tmpDir}/b.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/1 ISDIR,MOVED_TO
-${tmpDir}/b.txt CREATE
-${tmpDir}/b.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/1,"ISDIR,MOVED_TO"
+${tmpDir}/b.txt,CREATE
+${tmpDir}/b.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -693,12 +695,12 @@ test("rename file multiple times", async () => {
   await rename(`${tmpDir}/2.txt`, `${tmpDir}/3.txt`);
   await rename(`${tmpDir}/3.txt`, `${tmpDir}/4.txt`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1.txt MOVED_FROM
-${tmpDir}/2.txt MOVED_TO
-${tmpDir}/2.txt MOVED_FROM
-${tmpDir}/3.txt MOVED_TO
-${tmpDir}/3.txt MOVED_FROM
-${tmpDir}/4.txt MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1.txt,MOVED_FROM
+${tmpDir}/2.txt,MOVED_TO
+${tmpDir}/2.txt,MOVED_FROM
+${tmpDir}/3.txt,MOVED_TO
+${tmpDir}/3.txt,MOVED_FROM
+${tmpDir}/4.txt,MOVED_TO
 `);
   });
   watcher.dispose();
@@ -712,12 +714,12 @@ test("rename folder multiple times", async () => {
   await rename(`${tmpDir}/2`, `${tmpDir}/3`);
   await rename(`${tmpDir}/3`, `${tmpDir}/4`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/2 ISDIR,MOVED_TO
-${tmpDir}/2 ISDIR,MOVED_FROM
-${tmpDir}/3 ISDIR,MOVED_TO
-${tmpDir}/3 ISDIR,MOVED_FROM
-${tmpDir}/4 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2,"ISDIR,MOVED_TO"
+${tmpDir}/2,"ISDIR,MOVED_FROM"
+${tmpDir}/3,"ISDIR,MOVED_TO"
+${tmpDir}/3,"ISDIR,MOVED_FROM"
+${tmpDir}/4,"ISDIR,MOVED_TO"
 `);
   });
   watcher.dispose();
@@ -732,8 +734,8 @@ test("move in folder, move out another folder", async () => {
   await rename(`${tmpDir2}/2`, `${tmpDir}/2`);
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/2 ISDIR,MOVED_TO
-${tmpDir}/1 ISDIR,MOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/2,"ISDIR,MOVED_TO"
+${tmpDir}/1,"ISDIR,MOVED_FROM"
 `);
   });
   watcher.dispose();
@@ -748,8 +750,8 @@ test("move out folder, move in another folder", async () => {
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await rename(`${tmpDir2}/2`, `${tmpDir}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/2 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2,"ISDIR,MOVED_TO"
 `);
   });
   watcher.dispose();
@@ -762,10 +764,10 @@ test("nested rename", async () => {
   await rename(`${tmpDir}/1/2/3/4/5`, `${tmpDir}/1/6`);
   await rename(`${tmpDir}/1/2/3`, `${tmpDir}/1/6/3`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5 ISDIR,MOVED_FROM
-${tmpDir}/1/6 ISDIR,MOVED_TO
-${tmpDir}/1/2/3 ISDIR,MOVED_FROM
-${tmpDir}/1/6/3 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5,"ISDIR,MOVED_FROM"
+${tmpDir}/1/6,"ISDIR,MOVED_TO"
+${tmpDir}/1/2/3,"ISDIR,MOVED_FROM"
+${tmpDir}/1/6/3,"ISDIR,MOVED_TO"
 `);
   });
   watcher.clear();
@@ -775,16 +777,16 @@ ${tmpDir}/1/6/3 ISDIR,MOVED_TO
   await writeFile(`${tmpDir}/1/6/d.txt`, "");
   await writeFile(`${tmpDir}/1/6/3/e.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a.txt CREATE
-${tmpDir}/a.txt CLOSE_WRITE
-${tmpDir}/1/b.txt CREATE
-${tmpDir}/1/b.txt CLOSE_WRITE
-${tmpDir}/1/2/c.txt CREATE
-${tmpDir}/1/2/c.txt CLOSE_WRITE
-${tmpDir}/1/6/d.txt CREATE
-${tmpDir}/1/6/d.txt CLOSE_WRITE
-${tmpDir}/1/6/3/e.txt CREATE
-${tmpDir}/1/6/3/e.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a.txt,CREATE
+${tmpDir}/a.txt,CLOSE_WRITE
+${tmpDir}/1/b.txt,CREATE
+${tmpDir}/1/b.txt,CLOSE_WRITE
+${tmpDir}/1/2/c.txt,CREATE
+${tmpDir}/1/2/c.txt,CLOSE_WRITE
+${tmpDir}/1/6/d.txt,CREATE
+${tmpDir}/1/6/d.txt,CLOSE_WRITE
+${tmpDir}/1/6/3/e.txt,CREATE
+${tmpDir}/1/6/3/e.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -797,10 +799,10 @@ test("rename subtree", async () => {
   await rename(`${tmpDir}/1/2/3/4/5`, `${tmpDir}/1/5`);
   await writeFile(`${tmpDir}/1/5/6/7/a.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5 ISDIR,MOVED_FROM
-${tmpDir}/1/5 ISDIR,MOVED_TO
-${tmpDir}/1/5/a.txt CREATE
-${tmpDir}/1/5/a.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5,"ISDIR,MOVED_FROM"
+${tmpDir}/1/5,"ISDIR,MOVED_TO"
+${tmpDir}/1/5/a.txt,CREATE
+${tmpDir}/1/5/a.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -824,7 +826,7 @@ test("move out and move folder", async () => {
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await rename(`${tmpDir2}/1`, `${tmpDir2}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
 `);
   });
   watcher.dispose();
@@ -839,9 +841,9 @@ test("move and move out folder", async () => {
   await rename(`${tmpDir}/1`, `${tmpDir}/2`);
   await rename(`${tmpDir}/2`, `${tmpDir2}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/2 ISDIR,MOVED_TO
-${tmpDir}/2 ISDIR,MOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2,"ISDIR,MOVED_TO"
+${tmpDir}/2,"ISDIR,MOVED_FROM"
 `);
   });
   watcher.dispose();
@@ -856,9 +858,9 @@ test("move and move in folder", async () => {
   await rename(`${tmpDir}/1`, `${tmpDir}/2`);
   await rename(`${tmpDir2}/3`, `${tmpDir}/3`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/2 ISDIR,MOVED_TO
-${tmpDir}/3 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2,"ISDIR,MOVED_TO"
+${tmpDir}/3,"ISDIR,MOVED_TO"
 `);
   });
   watcher.dispose();
@@ -871,14 +873,14 @@ test("move in and move folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_TO"
 `);
   });
   watcher.clear();
   await rename(`${tmpDir}/1`, `${tmpDir}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/2 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2,"ISDIR,MOVED_TO"
 `);
   });
   watcher.dispose();
@@ -891,21 +893,21 @@ test("move in nested folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_TO"
 `);
   });
   watcher.clear();
   await writeFile(`${tmpDir}/1/2/3/4/5/6/7/8/9/new.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5/6/7/8/9/new.txt CREATE
-${tmpDir}/1/2/3/4/5/6/7/8/9/new.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5/6/7/8/9/new.txt,CREATE
+${tmpDir}/1/2/3/4/5/6/7/8/9/new.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
 });
 
-test("folder move race condition", async () => {
-  waitForExpect.defaults.timeout = 1000;
+test.skip("folder move race condition", async () => {
+  waitForExpect.defaults.timeout = 100;
   // this tests a very specific bug when a folder is moved in
   // it can happen that the watch for is not yet established
   // and the folder is renamed. When the renamed folder is renamed again
@@ -920,7 +922,7 @@ test("folder move race condition", async () => {
     const watcher = await createWatcher([tmpDir]);
     await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
     await waitForExpect(() => {
-      expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
+      expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_TO"
 `);
     });
     watcher.clear();
@@ -928,14 +930,14 @@ test("folder move race condition", async () => {
     await rename(`${tmpDir}/3`, `${tmpDir2}/4`);
     await writeFile(`${tmpDir2}/4/a.txt`, ``);
     await waitForExpect(() => {
-      expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/3 ISDIR,MOVED_TO
-${tmpDir}/3 ISDIR,MOVED_FROM
+      expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/3,"ISDIR,MOVED_TO"
+${tmpDir}/3,"ISDIR,MOVED_FROM"
 `);
     });
     watcher.dispose();
   }
-}, 1_000_000);
+}, 10_000);
 
 // TODO bug
 // for (let i = 0; i < 100; i++) {
@@ -966,8 +968,8 @@ test("rename short path to long path", async () => {
     `${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222`
   );
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222,"ISDIR,MOVED_TO"
 `);
   });
   watcher.dispose();
@@ -985,8 +987,8 @@ test("rename long path to short path", async () => {
   );
   await waitForExpect(() => {
     expect(watcher.stdout)
-      .toBe(`${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222 ISDIR,MOVED_FROM
-${tmpDir}/1 ISDIR,MOVED_TO
+      .toBe(`${tmpDir}/22222222222222222222222222222222222222222222222222222222222222222222222222,"ISDIR,MOVED_FROM"
+${tmpDir}/1,"ISDIR,MOVED_TO"
 `);
   });
   watcher.dispose();
@@ -1000,12 +1002,12 @@ test("renaming folders from top 1/1/1 -> -> 2/1/1 -> 2/3/1 -> 2/3/4", async () =
   await rename(`${tmpDir}/2/1`, `${tmpDir}/2/3`);
   await rename(`${tmpDir}/2/3/1`, `${tmpDir}/2/3/4`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/2 ISDIR,MOVED_TO
-${tmpDir}/2/1 ISDIR,MOVED_FROM
-${tmpDir}/2/3 ISDIR,MOVED_TO
-${tmpDir}/2/3/1 ISDIR,MOVED_FROM
-${tmpDir}/2/3/4 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2,"ISDIR,MOVED_TO"
+${tmpDir}/2/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2/3,"ISDIR,MOVED_TO"
+${tmpDir}/2/3/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2/3/4,"ISDIR,MOVED_TO"
 `);
   });
   watcher.dispose();
@@ -1019,12 +1021,12 @@ test("renaming folders from bottom 1/1/1 -> 1/1/4 -> 1/3/4 -> 2/3/4", async () =
   await rename(`${tmpDir}/1/1`, `${tmpDir}/1/3`);
   await rename(`${tmpDir}/1`, `${tmpDir}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/1/1 ISDIR,MOVED_FROM
-${tmpDir}/1/1/4 ISDIR,MOVED_TO
-${tmpDir}/1/1 ISDIR,MOVED_FROM
-${tmpDir}/1/3 ISDIR,MOVED_TO
-${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/2 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1/1/1,"ISDIR,MOVED_FROM"
+${tmpDir}/1/1/4,"ISDIR,MOVED_TO"
+${tmpDir}/1/1,"ISDIR,MOVED_FROM"
+${tmpDir}/1/3,"ISDIR,MOVED_TO"
+${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2,"ISDIR,MOVED_TO"
 `);
   });
   watcher.dispose();
@@ -1038,12 +1040,12 @@ test("renaming folders from middle 1/1/1 -> 1/3/1 -> 2/3/1 -> 2/3/4", async () =
   await rename(`${tmpDir}/1`, `${tmpDir}/2`);
   await rename(`${tmpDir}/2/3/1`, `${tmpDir}/2/3/4`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/1 ISDIR,MOVED_FROM
-${tmpDir}/1/3 ISDIR,MOVED_TO
-${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/2 ISDIR,MOVED_TO
-${tmpDir}/2/3/1 ISDIR,MOVED_FROM
-${tmpDir}/2/3/4 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1/1,"ISDIR,MOVED_FROM"
+${tmpDir}/1/3,"ISDIR,MOVED_TO"
+${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2,"ISDIR,MOVED_TO"
+${tmpDir}/2/3/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2/3/4,"ISDIR,MOVED_TO"
 `);
   });
   watcher.dispose();
@@ -1058,16 +1060,16 @@ test("move out child folder, remove parent folder, move child folder back in", a
   await rm(`${tmpDir}/1`, { recursive: true });
   await rename(`${tmpDir2}/2`, `${tmpDir}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/2 ISDIR,MOVED_FROM
-${tmpDir}/1 ISDIR,DELETE
-${tmpDir}/2 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2,"ISDIR,MOVED_FROM"
+${tmpDir}/1,"ISDIR,DELETE"
+${tmpDir}/2,"ISDIR,MOVED_TO"
 `);
   });
   watcher.clear();
   await writeFile(`${tmpDir}/2/a.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/2/a.txt CREATE
-${tmpDir}/2/a.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/2/a.txt,CREATE
+${tmpDir}/2/a.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -1080,8 +1082,8 @@ test("replace file with folder", async () => {
   await rm(`${tmpDir}/1`);
   await mkdir(`${tmpDir}/1`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 DELETE
-${tmpDir}/1 ISDIR,CREATE
+    expect(watcher.stdout).toBe(`${tmpDir}/1,DELETE
+${tmpDir}/1,"ISDIR,CREATE"
 `);
   });
   watcher.dispose();
@@ -1094,9 +1096,9 @@ test("replace folder with file", async () => {
   await rm(`${tmpDir}/1`, { recursive: true });
   await writeFile(`${tmpDir}/1`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,DELETE
-${tmpDir}/1 CREATE
-${tmpDir}/1 CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,DELETE"
+${tmpDir}/1,CREATE
+${tmpDir}/1,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -1111,12 +1113,12 @@ test("create multiple files in parallel", async () => {
     writeFile(`${tmpDir}/3`, ""),
   ]);
   await waitForExpect(() => {
-    expect(watcher.stdout).toContain(`${tmpDir}/1 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/1 CLOSE_WRITE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/2 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/2 CLOSE_WRITE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/3 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/3 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1,CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2,CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3,CLOSE_WRITE`);
   });
   watcher.dispose();
 });
@@ -1131,9 +1133,9 @@ test("remove multiple files in parallel", async () => {
   const watcher = await createWatcher([tmpDir]);
   await Promise.all([rm(`${tmpDir}/1`), rm(`${tmpDir}/2`), rm(`${tmpDir}/3`)]);
   await waitForExpect(() => {
-    expect(watcher.stdout).toContain(`${tmpDir}/1 DELETE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/2 DELETE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/3 DELETE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1,DELETE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2,DELETE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3,DELETE`);
   });
   watcher.dispose();
 });
@@ -1151,9 +1153,9 @@ test("move out multiple files in parallel", async () => {
     rename(`${tmpDir}/3`, `${tmpDir2}/3`),
   ]);
   await waitForExpect(() => {
-    expect(watcher.stdout).toContain(`${tmpDir}/1 MOVED_FROM`);
-    expect(watcher.stdout).toContain(`${tmpDir}/2 MOVED_FROM`);
-    expect(watcher.stdout).toContain(`${tmpDir}/3 MOVED_FROM`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1,MOVED_FROM`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2,MOVED_FROM`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3,MOVED_FROM`);
   });
   watcher.dispose();
 });
@@ -1169,9 +1171,9 @@ test("move out some files and folders", async () => {
   await rename(`${tmpDir}/2/3.txt`, `${tmpDir2}/3.txt`);
   await rename(`${tmpDir}/2`, `${tmpDir2}/2`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
-${tmpDir}/2/3.txt MOVED_FROM
-${tmpDir}/2 ISDIR,MOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
+${tmpDir}/2/3.txt,MOVED_FROM
+${tmpDir}/2,"ISDIR,MOVED_FROM"
 `);
   });
   watcher.dispose();
@@ -1191,8 +1193,8 @@ test("move out many folders", async () => {
     await rename(`${tmpDir}/${i}`, `${tmpDir2}/${i}`);
   }
   await waitForExpect(() => {
-    expect(watcher.stdout).toContain(`${tmpDir}/1 ISDIR,MOVED_FROM`);
-    expect(watcher.stdout).toContain(`${tmpDir}/99 ISDIR,MOVED_FROM`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1,"ISDIR,MOVED_FROM"`);
+    expect(watcher.stdout).toContain(`${tmpDir}/99,"ISDIR,MOVED_FROM"`);
   });
   watcher.dispose();
 });
@@ -1217,24 +1219,24 @@ test("create nine files in one directory", async () => {
   ]);
   await writeFile(`${tmpDir}/9`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toContain(`${tmpDir}/1 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/1 CLOSE_WRITE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/2 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/3 CLOSE_WRITE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/3 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/3 CLOSE_WRITE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/4 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/4 CLOSE_WRITE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/5 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/5 CLOSE_WRITE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/6 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/6 CLOSE_WRITE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/7 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/7 CLOSE_WRITE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/8 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/8 CLOSE_WRITE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/9 CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/9 CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1,CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3,CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/3,CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/4,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/4,CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/5,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/5,CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/6,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/6,CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/7,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/7,CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/8,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/8,CLOSE_WRITE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/9,CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/9,CLOSE_WRITE`);
   });
   watcher.dispose();
 });
@@ -1319,72 +1321,72 @@ test("create thirtythree files in nine folders", async () => {
   await writeFile(testh1Path, "");
   await writeFile(testi1Path, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/add1.txt CREATE
-${tmpDir}/add1.txt CLOSE_WRITE
-${tmpDir}/add2.txt CREATE
-${tmpDir}/add2.txt CLOSE_WRITE
-${tmpDir}/add3.txt CREATE
-${tmpDir}/add3.txt CLOSE_WRITE
-${tmpDir}/add4.txt CREATE
-${tmpDir}/add4.txt CLOSE_WRITE
-${tmpDir}/add5.txt CREATE
-${tmpDir}/add5.txt CLOSE_WRITE
-${tmpDir}/add6.txt CREATE
-${tmpDir}/add6.txt CLOSE_WRITE
-${tmpDir}/add7.txt CREATE
-${tmpDir}/add7.txt CLOSE_WRITE
-${tmpDir}/add8.txt CREATE
-${tmpDir}/add8.txt CLOSE_WRITE
-${tmpDir}/add9.txt CREATE
-${tmpDir}/add9.txt CLOSE_WRITE
-${tmpDir}/b/add1.txt CREATE
-${tmpDir}/b/add1.txt CLOSE_WRITE
-${tmpDir}/b/add2.txt CREATE
-${tmpDir}/b/add2.txt CLOSE_WRITE
-${tmpDir}/b/add3.txt CREATE
-${tmpDir}/b/add3.txt CLOSE_WRITE
-${tmpDir}/b/add4.txt CREATE
-${tmpDir}/b/add4.txt CLOSE_WRITE
-${tmpDir}/b/add5.txt CREATE
-${tmpDir}/b/add5.txt CLOSE_WRITE
-${tmpDir}/b/add6.txt CREATE
-${tmpDir}/b/add6.txt CLOSE_WRITE
-${tmpDir}/b/add7.txt CREATE
-${tmpDir}/b/add7.txt CLOSE_WRITE
-${tmpDir}/b/add8.txt CREATE
-${tmpDir}/b/add8.txt CLOSE_WRITE
-${tmpDir}/b/add9.txt CREATE
-${tmpDir}/b/add9.txt CLOSE_WRITE
-${tmpDir}/c/add1.txt CREATE
-${tmpDir}/c/add1.txt CLOSE_WRITE
-${tmpDir}/c/add2.txt CREATE
-${tmpDir}/c/add2.txt CLOSE_WRITE
-${tmpDir}/c/add3.txt CREATE
-${tmpDir}/c/add3.txt CLOSE_WRITE
-${tmpDir}/c/add4.txt CREATE
-${tmpDir}/c/add4.txt CLOSE_WRITE
-${tmpDir}/c/add5.txt CREATE
-${tmpDir}/c/add5.txt CLOSE_WRITE
-${tmpDir}/c/add6.txt CREATE
-${tmpDir}/c/add6.txt CLOSE_WRITE
-${tmpDir}/c/add7.txt CREATE
-${tmpDir}/c/add7.txt CLOSE_WRITE
-${tmpDir}/c/add8.txt CREATE
-${tmpDir}/c/add8.txt CLOSE_WRITE
-${tmpDir}/c/add9.txt CREATE
-${tmpDir}/c/add9.txt CLOSE_WRITE
-${tmpDir}/d/add1.txt CREATE
-${tmpDir}/d/add1.txt CLOSE_WRITE
-${tmpDir}/e/add1.txt CREATE
-${tmpDir}/e/add1.txt CLOSE_WRITE
-${tmpDir}/f/add1.txt CREATE
-${tmpDir}/f/add1.txt CLOSE_WRITE
-${tmpDir}/g/add1.txt CREATE
-${tmpDir}/g/add1.txt CLOSE_WRITE
-${tmpDir}/h/add1.txt CREATE
-${tmpDir}/h/add1.txt CLOSE_WRITE
-${tmpDir}/i/add1.txt CREATE
-${tmpDir}/i/add1.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/add1.txt,CREATE
+${tmpDir}/add1.txt,CLOSE_WRITE
+${tmpDir}/add2.txt,CREATE
+${tmpDir}/add2.txt,CLOSE_WRITE
+${tmpDir}/add3.txt,CREATE
+${tmpDir}/add3.txt,CLOSE_WRITE
+${tmpDir}/add4.txt,CREATE
+${tmpDir}/add4.txt,CLOSE_WRITE
+${tmpDir}/add5.txt,CREATE
+${tmpDir}/add5.txt,CLOSE_WRITE
+${tmpDir}/add6.txt,CREATE
+${tmpDir}/add6.txt,CLOSE_WRITE
+${tmpDir}/add7.txt,CREATE
+${tmpDir}/add7.txt,CLOSE_WRITE
+${tmpDir}/add8.txt,CREATE
+${tmpDir}/add8.txt,CLOSE_WRITE
+${tmpDir}/add9.txt,CREATE
+${tmpDir}/add9.txt,CLOSE_WRITE
+${tmpDir}/b/add1.txt,CREATE
+${tmpDir}/b/add1.txt,CLOSE_WRITE
+${tmpDir}/b/add2.txt,CREATE
+${tmpDir}/b/add2.txt,CLOSE_WRITE
+${tmpDir}/b/add3.txt,CREATE
+${tmpDir}/b/add3.txt,CLOSE_WRITE
+${tmpDir}/b/add4.txt,CREATE
+${tmpDir}/b/add4.txt,CLOSE_WRITE
+${tmpDir}/b/add5.txt,CREATE
+${tmpDir}/b/add5.txt,CLOSE_WRITE
+${tmpDir}/b/add6.txt,CREATE
+${tmpDir}/b/add6.txt,CLOSE_WRITE
+${tmpDir}/b/add7.txt,CREATE
+${tmpDir}/b/add7.txt,CLOSE_WRITE
+${tmpDir}/b/add8.txt,CREATE
+${tmpDir}/b/add8.txt,CLOSE_WRITE
+${tmpDir}/b/add9.txt,CREATE
+${tmpDir}/b/add9.txt,CLOSE_WRITE
+${tmpDir}/c/add1.txt,CREATE
+${tmpDir}/c/add1.txt,CLOSE_WRITE
+${tmpDir}/c/add2.txt,CREATE
+${tmpDir}/c/add2.txt,CLOSE_WRITE
+${tmpDir}/c/add3.txt,CREATE
+${tmpDir}/c/add3.txt,CLOSE_WRITE
+${tmpDir}/c/add4.txt,CREATE
+${tmpDir}/c/add4.txt,CLOSE_WRITE
+${tmpDir}/c/add5.txt,CREATE
+${tmpDir}/c/add5.txt,CLOSE_WRITE
+${tmpDir}/c/add6.txt,CREATE
+${tmpDir}/c/add6.txt,CLOSE_WRITE
+${tmpDir}/c/add7.txt,CREATE
+${tmpDir}/c/add7.txt,CLOSE_WRITE
+${tmpDir}/c/add8.txt,CREATE
+${tmpDir}/c/add8.txt,CLOSE_WRITE
+${tmpDir}/c/add9.txt,CREATE
+${tmpDir}/c/add9.txt,CLOSE_WRITE
+${tmpDir}/d/add1.txt,CREATE
+${tmpDir}/d/add1.txt,CLOSE_WRITE
+${tmpDir}/e/add1.txt,CREATE
+${tmpDir}/e/add1.txt,CLOSE_WRITE
+${tmpDir}/f/add1.txt,CREATE
+${tmpDir}/f/add1.txt,CLOSE_WRITE
+${tmpDir}/g/add1.txt,CREATE
+${tmpDir}/g/add1.txt,CLOSE_WRITE
+${tmpDir}/h/add1.txt,CREATE
+${tmpDir}/h/add1.txt,CLOSE_WRITE
+${tmpDir}/i/add1.txt,CREATE
+${tmpDir}/i/add1.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -1397,9 +1399,9 @@ test("remove and recreate file", async () => {
   await rm(`${tmpDir}/1.txt`);
   await writeFile(`${tmpDir}/1.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1.txt DELETE
-${tmpDir}/1.txt CREATE
-${tmpDir}/1.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/1.txt,DELETE
+${tmpDir}/1.txt,CREATE
+${tmpDir}/1.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -1412,7 +1414,7 @@ test("move in folder, then create folder inside that folder, remove outer folder
   const watcher = await createWatcher([tmpDir]);
   await rename(`${tmpDir2}/1`, `${tmpDir}/1`);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_TO
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_TO"
 `);
   });
   watcher.clear();
@@ -1421,8 +1423,8 @@ test("move in folder, then create folder inside that folder, remove outer folder
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await writeFile(`${tmpDir2}/1/2/3.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1/2 ISDIR,CREATE
-${tmpDir}/1 ISDIR,MOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/1/2,"ISDIR,CREATE"
+${tmpDir}/1,"ISDIR,MOVED_FROM"
 `);
   });
   watcher.dispose();
@@ -1436,9 +1438,9 @@ test("create and remove deeply nested folder", async () => {
   await rm(`${tmpDir}/1`, { recursive: true });
   await writeFile(`${tmpDir}/2.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toContain(`${tmpDir}/1/1 ISDIR,CREATE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/1 ISDIR,DELETE`);
-    expect(watcher.stdout).toContain(`${tmpDir}/2.txt CREATE`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1/1,"ISDIR,CREATE"`);
+    expect(watcher.stdout).toContain(`${tmpDir}/1,"ISDIR,DELETE"`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2.txt,CREATE`);
   });
   watcher.dispose();
 });
@@ -1451,7 +1453,7 @@ test("inner watcher should be removed when parent folder is moved out", async ()
   await rename(`${tmpDir}/1`, `${tmpDir2}/1`);
   await writeFile(`${tmpDir2}/1/2/3.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/1 ISDIR,MOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/1,"ISDIR,MOVED_FROM"
 `);
   });
   watcher.dispose();
@@ -1464,10 +1466,10 @@ test("rename deeply nested folder (https://github.com/inotify-tools/inotify-tool
   await rename(`${tmpDir}/a1`, `${tmpDir}/b1`);
   await writeFile(`${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a1 ISDIR,MOVED_FROM
-${tmpDir}/b1 ISDIR,MOVED_TO
-${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt CREATE
-${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt CLOSE_WRITE
+    expect(watcher.stdout).toBe(`${tmpDir}/a1,"ISDIR,MOVED_FROM"
+${tmpDir}/b1,"ISDIR,MOVED_TO"
+${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt,CREATE
+${tmpDir}/b1/a2/a3/a4/a5/a6/a7/a8/a9/new.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
@@ -1482,9 +1484,9 @@ test("move some files around (https://github.com/inotify-tools/inotify-tools/iss
   await rename(`${tmpDir}/to_move`, `${tmpDir2}/to_move`);
   await writeFile(`${tmpDir2}/to_move/dir/test_file.txt`, "");
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/to_move/dir/test_file.txt CREATE
-${tmpDir}/to_move/dir/test_file.txt CLOSE_WRITE
-${tmpDir}/to_move ISDIR,MOVED_FROM
+    expect(watcher.stdout).toBe(`${tmpDir}/to_move/dir/test_file.txt,CREATE
+${tmpDir}/to_move/dir/test_file.txt,CLOSE_WRITE
+${tmpDir}/to_move,"ISDIR,MOVED_FROM"
 `);
   });
   watcher.dispose();
@@ -1501,14 +1503,14 @@ test("move and delete some folders (https://github.com/Axosoft/nsfw/pull/63)", a
   await rm(`${tmpDir}/a`, { recursive: true });
   await rm(`${tmpDir}/d`, { recursive: true });
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/a/b ISDIR,MOVED_FROM
-${tmpDir}/d/b ISDIR,MOVED_TO
-${tmpDir}/a/c ISDIR,MOVED_FROM
-${tmpDir}/a/b ISDIR,MOVED_TO
-${tmpDir}/a/b ISDIR,DELETE
-${tmpDir}/a ISDIR,DELETE
-${tmpDir}/d/b ISDIR,DELETE
-${tmpDir}/d ISDIR,DELETE
+    expect(watcher.stdout).toBe(`${tmpDir}/a/b,"ISDIR,MOVED_FROM"
+${tmpDir}/d/b,"ISDIR,MOVED_TO"
+${tmpDir}/a/c,"ISDIR,MOVED_FROM"
+${tmpDir}/a/b,"ISDIR,MOVED_TO"
+${tmpDir}/a/b,"ISDIR,DELETE"
+${tmpDir}/a,"ISDIR,DELETE"
+${tmpDir}/d/b,"ISDIR,DELETE"
+${tmpDir}/d,"ISDIR,DELETE"
 `);
   });
   watcher.dispose();
