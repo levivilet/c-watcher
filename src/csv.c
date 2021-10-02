@@ -1,16 +1,6 @@
-// #define _XOPEN_SOURCE 500
-#define _GNU_SOURCE
-
-#include <errno.h>
-#include <ftw.h>
-#include <poll.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/inotify.h>
-#include <time.h>
-#include <unistd.h>
 
 bool csv_needs_escape(const char* str) {
     int len = strlen(str);
