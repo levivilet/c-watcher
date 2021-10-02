@@ -66,12 +66,6 @@ void full_path(char **fpath, const struct inotify_event *event) {
     }
 }
 
-const char *dir_path(const struct inotify_event *event) {
-    ListNode *node = storage_find(event->wd);
-    // fprintf(fp, "wd: %d\n", event->wd);
-    return node->fpath;
-}
-
 static void add_watch(const char *fpath) {
     int wd = notify_add_watch(fpath);
     // fprintf(fp, "ADD WATCH %d %s\n", wd, fpath);
@@ -90,24 +84,16 @@ static void remove_watch_by_path(const char *fpath) {
 
 static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
                         struct FTW *ftwbuf) {
-    // if (ftwbuf->level == 0) {
-    //     return 0;
-    // }
     // printf("VISIT PATH %s\n", fpath);
-    // fprintf(fp, "level%d\n", ftwbuf->level);
-    // sb.f
     if (tflag == FTW_D) {
         add_watch(fpath);
     }
-    // free(fpath);
-
     return 0; /* To tell nftw() to continue */
 }
 
 /* Walk folder recursively and setup watcher for each file */
 static void watch_recursively(const char *dir) {
     // fprintf(fp, "watch recursively %s\n", dir);
-    // add_watch(dir);
     int flags = FTW_PHYS;
     // TODO tweak amount of descriptors to tweak performance
     int descriptors = 255;
@@ -199,12 +185,9 @@ static void adjust_watchers(const struct inotify_event *event) {
             // printf("done storage rename\n");
             // fflush(stdout);
             // printf("new full path %s\n", fpath);
-            // storage_rename();
-            // moved_from->fpath=
             return;
         }
         // moved outside -> remove watch
-        // const char *fpath = dir_path(event);
         // fprintf(fp, "NO RENAME, just ignored folder %s\n", fpath);
         // printf("event %s\n", event->name);
         // storage_print();
@@ -393,14 +376,12 @@ int main(int argc, char *argv[]) {
         if (poll_num > 0) {
             if (fds[0].revents & POLLIN) {
                 /* Console input is available. Empty stdin and quit. */
-
                 while (read(STDIN_FILENO, &buf, 1) > 0 && buf != '\n') continue;
                 break;
             }
 
             if (fds[1].revents & POLLIN) {
                 /* Inotify events are available. */
-
                 handle_events(fd);
             }
         }
