@@ -316,10 +316,6 @@ static void handle_events(int fd) {
         // storage_print(fp);
         // printf("done\n");
     }
-
-    // storage_print(fp);
-    // fprintf(fp, "end of loop\n");
-    // TODO free moved from if it is not null
     fflush(stdout);
 }
 
@@ -339,7 +335,6 @@ int main(int argc, char *argv[]) {
     nfds_t nfds;
     struct pollfd fds[2];
 
-    /* Create the file descriptor for accessing the inotify API. */
     notify_init();
 
     fprintf(stderr, "Setting up watches. This may take a while!\n");
@@ -357,13 +352,10 @@ int main(int argc, char *argv[]) {
 
     /* Prepare for polling. */
 
-    nfds = 2;
+    nfds = 1;
 
-    fds[0].fd = STDIN_FILENO; /* Console input */
+    fds[0].fd = fd; /* Inotify input */
     fds[0].events = POLLIN;
-
-    fds[1].fd = fd; /* Inotify input */
-    fds[1].events = POLLIN;
 
     /* Wait for events and/or terminal input. */
 
@@ -380,12 +372,6 @@ int main(int argc, char *argv[]) {
 
         if (poll_num > 0) {
             if (fds[0].revents & POLLIN) {
-                /* Console input is available. Empty stdin and quit. */
-                while (read(STDIN_FILENO, &buf, 1) > 0 && buf != '\n') continue;
-                break;
-            }
-
-            if (fds[1].revents & POLLIN) {
                 /* Inotify events are available. */
                 handle_events(fd);
             }
