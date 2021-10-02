@@ -4,26 +4,26 @@ on: [push]
 
 jobs:
   build:
-  runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: linux
-            arch: x64
-            npm_config_arch: x64
-          - os: ubuntu-latest
-            platform: linux
-            arch: arm64
-            npm_config_arch: arm64
-          - os: ubuntu-latest
-            platform: linux
-            arch: armhf
-            npm_config_arch: arm
-          - os: ubuntu-latest
-            platform: alpine
-            arch: x64
-            npm_config_arch: x64
+    runs-on: ${{ matrix.os }}
+      strategy:
+        matrix:
+          include:
+            - os: ubuntu-latest
+              platform: linux
+              arch: x64
+              npm_config_arch: x64
+            - os: ubuntu-latest
+              platform: linux
+              arch: arm64
+              npm_config_arch: arm64
+            - os: ubuntu-latest
+              platform: linux
+              arch: armhf
+              npm_config_arch: arm
+            - os: ubuntu-latest
+              platform: alpine
+              arch: x64
+              npm_config_arch: x64
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
