@@ -1490,6 +1490,30 @@ ${tmpDir}/to_move ISDIR,MOVED_FROM
   watcher.dispose();
 });
 
+test("move and delete some folders (https://github.com/Axosoft/nsfw/pull/63)", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/a/b`, { recursive: true });
+  await mkdir(`${tmpDir}/a/c`, { recursive: true });
+  await mkdir(`${tmpDir}/d`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/a/b`, `${tmpDir}/d/b`);
+  await rename(`${tmpDir}/a/c`, `${tmpDir}/a/b`);
+  await rm(`${tmpDir}/a`, { recursive: true });
+  await rm(`${tmpDir}/d`, { recursive: true });
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a/b ISDIR,MOVED_FROM
+${tmpDir}/d/b ISDIR,MOVED_TO
+${tmpDir}/a/c ISDIR,MOVED_FROM
+${tmpDir}/a/b ISDIR,MOVED_TO
+${tmpDir}/a/b ISDIR,DELETE
+${tmpDir}/a ISDIR,DELETE
+${tmpDir}/d/b ISDIR,DELETE
+${tmpDir}/d ISDIR,DELETE
+`);
+  });
+  watcher.dispose();
+});
+
 // TODO test move in folder then create folder inside that folder, remove outer folder and create file in inner folder
 
 // TODO test remove lowest wd
