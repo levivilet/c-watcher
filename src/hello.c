@@ -21,17 +21,17 @@ char *moved_from = 0;
 const char *get_event_string(const struct inotify_event *event) {
     switch (event->mask) {
         case /* IN_ISDIR | IN_CREATE */ 1073742080:
-            return "\"ISDIR,CREATE\"";
+            return "CREATE_DIR";
         case /* IN_ISDIR | IN_MODIFY */ 1073741826:
-            return "\"ISDIR,MODIFY\"";
+            return "MODIFY_DIR";
         case /* IN_ISDIR | IN_OPEN */ 1073741856:
-            return "\"ISDIR,OPEN\"";
+            return "OPEN_DIR";
         case /* IN_ISDIR | IN_DELETE */ 1073742336:
-            return "\"ISDIR,DELETE\"";
+            return "DELETE_DIR";
         case /* IN_ISDIR | IN_MOVED_FROM */ 1073741888:
-            return "\"ISDIR,MOVED_FROM\"";
+            return "MOVED_FROM_DIR";
         case /* IN_ISDIR | IN_MOVED_TO */ 1073741952:
-            return "\"ISDIR,MOVED_TO\"";
+            return "MOVED_TO_DIR";
         case /* IN_ACCESS */ 1:
             return "ACCESS";
         case /* IN_ATTRIB */ 4:
