@@ -137,6 +137,10 @@ beforeAll(() => {
   waitForExpect.defaults.timeout = 101;
 });
 
+afterAll(async () => {
+  await exec(`rm`, ["-rf", "/tmp/foo*"]);
+});
+
 test("spawn", async () => {
   const tmpDir = await getTmpDir();
   const watcher = await createWatcher([tmpDir]);
@@ -1731,6 +1735,34 @@ test("change folder attribute", async () => {
 // TODO test softlink and hardlinks
 
 // TODO test exclude
+
+test("exclude node_modules", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/node_modules`);
+  const watcher = await createWatcher([tmpDir, "--exclude", "node_modules"]);
+  await mkdir(`${tmpDir}/node_modules/lodash`);
+  await writeFile(`${tmpDir}/a.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a.txt,CREATE
+${tmpDir}/a.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("exclude .git", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/.git/objects`, { recursive: true });
+  const watcher = await createWatcher([tmpDir, "--exclude", ".git"]);
+  await writeFile(`${tmpDir}/.git/objects/1`, "");
+  await writeFile(`${tmpDir}/a.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a.txt,CREATE
+${tmpDir}/a.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
 
 test("cli help", async () => {
   const watcher = await createCliWatcher(["--help"]);

@@ -6,6 +6,7 @@
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/inotify.h>
 #include <time.h>
 #include <unistd.h>
@@ -82,18 +83,21 @@ static void add_watch(const char *fpath) {
 }
 
 static void remove_watch_by_path(const char *fpath) {
-    // fprintf(fp, "rm by path %s\n", fpath);
-    // storage_print();
     storage_find_and_remove_by_path(fpath, notify_remove_watch);
 }
 
 static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
                         struct FTW *ftwbuf) {
-    // printf("VISIT PATH %s\n", fpath);
     if (tflag == FTW_D) {
+        char *slash = strrchr(fpath, '/');
+        for (int i = 0; i < excludec; i++) {
+            if (slash && !strcmp(slash + 1, exclude[i])) {
+                return FTW_SKIP_SUBTREE;
+            }
+        }
         add_watch(fpath);
     }
-    return 0; /* To tell nftw() to continue */
+    return FTW_CONTINUE;
 }
 
 /* Walk folder recursively and setup watcher for each file */
