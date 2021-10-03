@@ -230,9 +230,7 @@ test("copy folder", async () => {
   const watcher = await createWatcher([tmpDir]);
   await exec("cp", ["-r", `${tmpDir}/1`, `${tmpDir}/2`]);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`${tmpDir}/2,CREATE_DIR
-${tmpDir}/2,ATTRIB_DIR
-`);
+    expect(watcher.stdout).toContain(`${tmpDir}/2,CREATE_DIR`);
   });
   watcher.dispose();
 });
