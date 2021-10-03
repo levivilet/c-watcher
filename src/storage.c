@@ -34,7 +34,7 @@ void storage_print_count() {
 void storage_add(int wd, const char *fpath) {
     // printf("storage add %s %d\n", fpath, wd);
     // storage_print_count();
-    ListNode *new_node = (ListNode *)calloc(1, sizeof(ListNode));
+    ListNode *new_node = (ListNode *)malloc(sizeof(ListNode));
     new_node->wd = wd;
     new_node->fpath = strdup(fpath);
     new_node->next = head;
