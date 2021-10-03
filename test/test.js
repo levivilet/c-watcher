@@ -1789,6 +1789,27 @@ ${tmpDir}/c.txt,CLOSE_WRITE
 // TODO test move in excluded folder
 // TODO test move out excluded folder
 
+test("move in excluded folder", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir2}/a`);
+  const watcher = await createWatcher([tmpDir, "--exclude", "a"]);
+  await rename(`${tmpDir2}/a`, `${tmpDir}/a`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a,MOVED_TO_DIR
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/a/a.txt`, "");
+  await writeFile(`${tmpDir}/b.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/b.txt,CREATE
+${tmpDir}/b.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
 test("rename excluded folder to non-excluded folder", async () => {
   const tmpDir = await getTmpDir();
   await mkdir(`${tmpDir}/a`);
