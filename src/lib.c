@@ -175,8 +175,6 @@ static void output_event(const struct inotify_event *event) {
     } else {
         fprintf(stdout, "%s/%s,%s\n", node->fpath, event->name, event_string);
     }
-    // TODO more efficient buffer handling
-    fflush(stdout);
 }
 
 static void adjust_watchers(const struct inotify_event *event) {

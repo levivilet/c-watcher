@@ -1944,3 +1944,5 @@ test("cli unknown option", async () => {
   });
   watcher.dispose();
 });
+
+// TODO move folder inside out
