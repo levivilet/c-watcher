@@ -118,7 +118,7 @@ static void watch_recursively(const char *dir) {
     int descriptors = 255;
     if (nftw(dir, visit_dirent, descriptors, flags) == -1) {
         if (errno == ENOENT) {
-            printf("ENOENT\n");
+            // printf("ENOENT\n");
             // folder might have already been removed
             return;
         }
