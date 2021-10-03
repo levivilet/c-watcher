@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import execa from "execa";
-import { mkdir, mkdtemp } from "fs/promises";
+import { mkdir, mkdtemp, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import pidusage from "pidusage";
@@ -62,14 +62,28 @@ const createWatcher = async (args = [], options = {}) => {
 
 const main = async () => {
   const tmpDir = await getTmpDir();
-  await mkdir(`${tmpDir}/a`);
-  const watcher = await createWatcher([tmpDir]);
-  await exec("chmod", ["-R", "g+s", `${tmpDir}/a`]);
-  console.log("watching");
-  console.log(watcher.stdout);
-  // const e = performance.now();
-  // console.log(e - s);
-  // const initialStats = await getStats(watcher.pid);
+  await Promise.all([
+    mkdir(`${tmpDir}/a/a/a`, { recursive: true }),
+    mkdir(`${tmpDir}/b/b/b`, { recursive: true }),
+    mkdir(`${tmpDir}/c/c/c`, { recursive: true }),
+    mkdir(`${tmpDir}/d/d/d`, { recursive: true }),
+  ]);
+  const watcher = await createWatcher([
+    tmpDir,
+    "--exclude",
+    "a",
+    "--exclude",
+    "b",
+    "--exclude",
+    "c",
+  ]);
+  await writeFile(`${tmpDir}/a/1.txt`, "");
+  await writeFile(`${tmpDir}/b/1.txt`, "");
+  await writeFile(`${tmpDir}/c/1.txt`, "");
+  await writeFile(`${tmpDir}/d/1.txt`, "");
+  await writeFile(`${tmpDir}/1.txt`, "");
+  await writeFile(`${tmpDir}/d/1.txt`, "");
+  // console.log(watcher.stdout);
 };
 
 main();

@@ -1788,7 +1788,7 @@ ${tmpDir}/c.txt,CLOSE_WRITE
 
 // TODO test renaming from/to folder that is excluded
 
-test.skip("exclude multiple folders", async () => {
+test("exclude multiple folders", async () => {
   const tmpDir = await getTmpDir();
   await Promise.all([
     mkdir(`${tmpDir}/a`),

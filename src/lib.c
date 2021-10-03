@@ -98,8 +98,11 @@ static void remove_watch_by_path(const char *fpath) {
 
 static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
                         struct FTW *ftwbuf) {
+    // printf("visit %s\n", fpath);
+    // TODO use base to get basename
     if (tflag == FTW_D) {
         if (is_excluded_folder(fpath)) {
+            // printf("is excluded %s\n", fpath);
             return FTW_SKIP_SUBTREE;
         }
         add_watch(fpath);
@@ -110,11 +113,12 @@ static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
 /* Walk folder recursively and setup watcher for each file */
 static void watch_recursively(const char *dir) {
     // fprintf(fp, "watch recursively %s\n", dir);
-    int flags = FTW_PHYS;
+    int flags = FTW_PHYS | FTW_ACTIONRETVAL;
     // TODO tweak amount of descriptors to tweak performance
     int descriptors = 255;
     if (nftw(dir, visit_dirent, descriptors, flags) == -1) {
         if (errno == ENOENT) {
+            printf("ENOENT\n");
             // folder might have already been removed
             return;
         }
