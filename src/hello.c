@@ -20,6 +20,8 @@ char *moved_from = 0;
 
 const char *get_event_string(const struct inotify_event *event) {
     switch (event->mask) {
+        case /* IN_ISDIR | IN_ATTRIB |  */ 1073741828:
+            return "ATTRIB_DIR";
         case /* IN_ISDIR | IN_CREATE */ 1073742080:
             return "CREATE_DIR";
         case /* IN_ISDIR | IN_MODIFY */ 1073741826:
@@ -135,7 +137,7 @@ static void watch_recursively(const char *dir) {
 static void output_event(const struct inotify_event *event) {
     // TODO put this after getting node
     const char *event_string = get_event_string(event);
-    if (!event_string) {
+    if (!event->len || !event_string) {
         return;
     }
     ListNode *node = storage_find(event->wd);
@@ -331,7 +333,7 @@ static void handle_events(int fd) {
 int main(int argc, char *argv[]) {
     // printf("hello 1\n");
     // fprintf(stdout, "%d\n", IN_ISDIR | IN_MOVED_FROM);
-    // fprintf(stdout, "%d\n", IN_ISDIR | IN_MOVED_TO);
+    // fprintf(stdout, "%d\n", IN_ISDIR | IN_ATTRIB);
     // fp = fopen("/tmp/test.txt", "w+");
     // fp = stdout;
 

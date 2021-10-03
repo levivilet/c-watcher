@@ -2,6 +2,7 @@ import { spawn } from "child_process";
 import {
   appendFile,
   chmod,
+  chown,
   copyFile,
   mkdir,
   mkdtemp,
@@ -230,6 +231,7 @@ test("copy folder", async () => {
   await exec("cp", ["-r", `${tmpDir}/1`, `${tmpDir}/2`]);
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/2,CREATE_DIR
+${tmpDir}/2,ATTRIB_DIR
 `);
   });
   watcher.dispose();
@@ -1679,4 +1681,16 @@ ${tmpDir}/d,DELETE_DIR
 //   // await mkdir(`${tmpDir}/${i}`);
 // }
 
-// TODO attrib dir test
+test("change folder attribute", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/a`);
+  const watcher = await createWatcher([tmpDir]);
+  await exec("chmod", ["-R", "g+s", `${tmpDir}/a`]);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a,ATTRIB_DIR
+`);
+  });
+  watcher.dispose();
+});
+
+// TODO test softlink and hardlinks

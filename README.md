@@ -19,24 +19,25 @@ sample-folder/file.txt,CLOSE_WRITE
 
 The following events can be emitted:
 
-| Name           | Description                   |
-| -------------- | ----------------------------- |
-| CREATE_DIR     | Directory is created          |
-| MODIFY_DIR     | Directory is modified         |
-| OPEN_DIR       | Directory is opened           |
-| DELETE_DIR     | Directory is deleted          |
-| MOVED_FROM_DIR | Directory moves in            |
-| MOVED_TO_DIR   | Directory moves out           |
-| ACCESS         | File is accessed              |
-| ATTRIB         | File attribute is changed     |
-| CLOSE_WRITE    | File is written to and closed |
-| CLOSE_NOWRITE  | File is closed                |
-| CREATE         | File is created               |
-| DELETE         | File is deleted               |
-| MODIFY         | File is modified              |
-| MOVED_FROM     | File moves in                 |
-| MOVED_TO       | File moves out                |
-| OPEN           | File is opened                |
+| Name           | Description                    |
+| -------------- | ------------------------------ |
+| ATTRIB_DIR     | Directory attribute is changed |
+| CREATE_DIR     | Directory is created           |
+| MODIFY_DIR     | Directory is modified          |
+| OPEN_DIR       | Directory is opened            |
+| DELETE_DIR     | Directory is deleted           |
+| MOVED_FROM_DIR | Directory moves in             |
+| MOVED_TO_DIR   | Directory moves out            |
+| ACCESS         | File is accessed               |
+| ATTRIB         | File attribute is changed      |
+| CLOSE_WRITE    | File is written to and closed  |
+| CLOSE_NOWRITE  | File is closed                 |
+| CREATE         | File is created                |
+| DELETE         | File is deleted                |
+| MODIFY         | File is modified               |
+| MOVED_FROM     | File moves in                  |
+| MOVED_TO       | File moves out                 |
+| OPEN           | File is opened                 |
 
 ## Caveats
 
