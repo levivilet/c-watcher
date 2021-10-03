@@ -1694,3 +1694,5 @@ test("change folder attribute", async () => {
 });
 
 // TODO test softlink and hardlinks
+
+// TODO test exclude
