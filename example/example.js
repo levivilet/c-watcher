@@ -64,16 +64,18 @@ const createWatcher = async (args = [], options = {}) => {
 const main = async () => {
   const tmpDir = await getTmpDir();
   await mkdir(`${tmpDir}/b`);
-  const watcher = await createWatcher([tmpDir, "--exclude", "a"]);
-  await rename(`${tmpDir}/b`, `${tmpDir}/a`);
+  const s = performance.now();
+  const watcher = await createWatcher(["/home/simon/.cache/repos/vscode"]);
+  console.log(performance.now() - s);
+  // await rename(`${tmpDir}/b`, `${tmpDir}/a`);
   //   await waitForExpect(() => {
   //     expect(watcher.stdout).toBe(`${tmpDir}/b,MOVED_FROM_DIR
   // ${tmpDir}/a,MOVED_TO_DIR
   // `);
   //   });
   // watcher.clear();
-  await writeFile(`${tmpDir}/a/a.txt`, "");
-  await writeFile(`${tmpDir}/c.txt`, "");
+  // await writeFile(`${tmpDir}/a/a.txt`, "");
+  // await writeFile(`${tmpDir}/c.txt`, "");
   //   await waitForExpect(() => {
   //     expect(watcher.stdout).toBe(`
   // `);

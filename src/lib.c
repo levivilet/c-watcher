@@ -62,14 +62,18 @@ const char *get_event_string(const struct inotify_event *event) {
     }
 }
 
-static bool is_excluded_folder(const char *fpath) {
-    char *slash = strrchr(fpath, '/');
+static bool is_excluded_name(const char *name) {
     for (int i = 0; i < excludec; i++) {
-        if (slash && !strcmp(slash + 1, exclude[i])) {
+        if (!strcmp(name, exclude[i])) {
             return true;
         }
     }
     return false;
+}
+
+static bool is_excluded_folder(const char *fpath) {
+    char *slash = strrchr(fpath, '/');
+    return is_excluded_name(slash + 1);
 }
 
 static void full_path(char **fpath, const struct inotify_event *event) {
@@ -98,11 +102,8 @@ static void remove_watch_by_path(const char *fpath) {
 
 static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
                         struct FTW *ftwbuf) {
-    // printf("visit %s\n", fpath);
-    // TODO use base to get basename
     if (tflag == FTW_D) {
-        if (is_excluded_folder(fpath)) {
-            // printf("is excluded %s\n", fpath);
+        if (is_excluded_name(fpath + ftwbuf->base)) {
             return FTW_SKIP_SUBTREE;
         }
         add_watch(fpath);
