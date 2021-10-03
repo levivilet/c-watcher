@@ -46,6 +46,12 @@ const createWatcher = async (args = []) => {
     child.stderr.on("data", handleData);
   });
 
+  child.on("exit", (code) => {
+    if (code == 1) {
+      throw new Error("exit code 1");
+    }
+  });
+
   return {
     get stdout() {
       return result;
@@ -55,6 +61,37 @@ const createWatcher = async (args = []) => {
     },
     clear() {
       result = "";
+    },
+  };
+};
+
+/**
+ *
+ * @param {readonly string[]} args
+ */
+const createCliWatcher = async (args = []) => {
+  const child = spawn("./hello", args);
+  let stdout = "";
+  let stderr = "";
+  child.stdout.on("data", (data) => {
+    stdout += data.toString();
+  });
+  child.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
+
+  return {
+    get stdout() {
+      return stdout;
+    },
+    get stderr() {
+      return stderr;
+    },
+    dispose() {
+      child.kill();
+    },
+    clear() {
+      stdout = "";
     },
   };
 };
@@ -1694,3 +1731,58 @@ test("change folder attribute", async () => {
 // TODO test softlink and hardlinks
 
 // TODO test exclude
+
+// TODO test cli
+// - version
+// - help
+// - should output error on invalid options
+
+test("cli help", async () => {
+  const watcher = await createCliWatcher(["--help"]);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`hello 0.0.1
+Recursively watch a folder for changes
+Usage: hello [ options ] sample-folder
+Options:
+\t-h|--help     \tShow this help text.
+\t--exclude <name>
+\t              \tExclude all events on files matching <name>
+`);
+  });
+  watcher.dispose();
+});
+
+test("cli version", async () => {
+  const watcher = await createCliWatcher(["--version"]);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toMatch(/hello \d+\.\d+\.\d+/);
+  });
+  watcher.dispose();
+});
+
+test("cli missing arguments", async () => {
+  const watcher = await createCliWatcher([]);
+  await waitForExpect(() => {
+    expect(watcher.stderr).toBe(`No files specified to watch!
+`);
+  });
+  watcher.dispose();
+});
+
+test("cli invalid option", async () => {
+  const watcher = await createCliWatcher(["--exclude   "]);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`Usage: hello [ options ] sample-folder
+`);
+  });
+  watcher.dispose();
+});
+
+test("cli unknown option", async () => {
+  const watcher = await createCliWatcher(["-k"]);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`Usage: hello [ options ] sample-folder
+`);
+  });
+  watcher.dispose();
+});
