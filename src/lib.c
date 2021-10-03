@@ -62,7 +62,17 @@ const char *get_event_string(const struct inotify_event *event) {
     }
 }
 
-void full_path(char **fpath, const struct inotify_event *event) {
+static bool is_excluded_folder(const char *fpath) {
+    char *slash = strrchr(fpath, '/');
+    for (int i = 0; i < excludec; i++) {
+        if (slash && !strcmp(slash + 1, exclude[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void full_path(char **fpath, const struct inotify_event *event) {
     ListNode *node = storage_find(event->wd);
     if (asprintf(fpath, "%s/%s", node->fpath, event->name) == -1) {
         printf("asprintf error");
@@ -89,11 +99,8 @@ static void remove_watch_by_path(const char *fpath) {
 static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
                         struct FTW *ftwbuf) {
     if (tflag == FTW_D) {
-        char *slash = strrchr(fpath, '/');
-        for (int i = 0; i < excludec; i++) {
-            if (slash && !strcmp(slash + 1, exclude[i])) {
-                return FTW_SKIP_SUBTREE;
-            }
+        if (is_excluded_folder(fpath)) {
+            return FTW_SKIP_SUBTREE;
         }
         add_watch(fpath);
     }
@@ -234,11 +241,9 @@ static void adjust_watchers(const struct inotify_event *event) {
         // new folder -> add watcher
         char *fpath;
         full_path(&fpath, event);
-        // fprintf(fp, "ADD WATCHER %s\n", fpath);
-        // printf("FULLPATH%s\n", path);
-        // fprintf(fp, "NEW_DIR - created or moved  %s\n", fpath);
-        // printf("NAME: %s\n", event->name);
-        watch_recursively(fpath);
+        if (!is_excluded_folder(fpath)) {
+            watch_recursively(fpath);
+        }
         free(fpath);
     }
     // if(event->mask & IN_DELETE){

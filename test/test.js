@@ -1764,6 +1764,61 @@ ${tmpDir}/a.txt,CLOSE_WRITE
   watcher.dispose();
 });
 
+test("creating folder that is excluded", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir, "--exclude", "a"]);
+  await mkdir(`${tmpDir}/a`);
+  await writeFile(`${tmpDir}/b.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a,CREATE_DIR
+${tmpDir}/b.txt,CREATE
+${tmpDir}/b.txt,CLOSE_WRITE
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/a/a.txt`, "");
+  await writeFile(`${tmpDir}/c.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/c.txt,CREATE
+${tmpDir}/c.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+// TODO test renaming from/to folder that is excluded
+
+test.skip("exclude multiple folders", async () => {
+  const tmpDir = await getTmpDir();
+  await Promise.all([
+    mkdir(`${tmpDir}/a`),
+    mkdir(`${tmpDir}/b`),
+    mkdir(`${tmpDir}/c`),
+    mkdir(`${tmpDir}/d`),
+  ]);
+  const watcher = await createWatcher([
+    tmpDir,
+    "--exclude",
+    "a",
+    "--exclude",
+    "b",
+    "--exclude",
+    "c",
+  ]);
+  await Promise.all([
+    writeFile(`${tmpDir}/a/1.txt`, ""),
+    writeFile(`${tmpDir}/b/1.txt`, ""),
+    writeFile(`${tmpDir}/c/1.txt`, ""),
+    writeFile(`${tmpDir}/d/1.txt`, ""),
+  ]);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/d/1.txt,CREATE
+${tmpDir}/d/1.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
 test("cli help", async () => {
   const watcher = await createCliWatcher(["--help"]);
   await waitForExpect(() => {
