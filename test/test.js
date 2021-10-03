@@ -1786,7 +1786,49 @@ ${tmpDir}/c.txt,CLOSE_WRITE
   watcher.dispose();
 });
 
-// TODO test renaming from/to folder that is excluded
+// TODO test move in excluded folder
+// TODO test move out excluded folder
+
+test("rename excluded folder to non-excluded folder", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/a`);
+  const watcher = await createWatcher([tmpDir, "--exclude", "a"]);
+  await rename(`${tmpDir}/a`, `${tmpDir}/b`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a,MOVED_FROM_DIR
+${tmpDir}/b,MOVED_TO_DIR
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/b/b.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/b/b.txt,CREATE
+${tmpDir}/b/b.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("rename non-excluded folder to excluded folder", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/b`);
+  const watcher = await createWatcher([tmpDir, "--exclude", "a"]);
+  await rename(`${tmpDir}/b`, `${tmpDir}/a`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/b,MOVED_FROM_DIR
+${tmpDir}/a,MOVED_TO_DIR
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/a/a.txt`, "");
+  await writeFile(`${tmpDir}/c.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/c.txt,CREATE
+${tmpDir}/c.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
 
 test("exclude multiple folders", async () => {
   const tmpDir = await getTmpDir();

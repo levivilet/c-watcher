@@ -183,7 +183,7 @@ static void adjust_watchers(const struct inotify_event *event) {
     // printf("EVENT NAME %s\n", event->name);
 
     if (moved_from) {
-        // fprintf(fp, "HAS MOVED FROM EVENT POTENTIAL RENAME\n");
+        // fprintf(stdout, "HAS MOVED FROM EVENT POTENTIAL RENAME\n");
         // TODO check cookie
         if (event->mask & IN_ISDIR && event->mask & IN_MOVED_TO) {
             // fprintf(fp, "moved from name %s\n", moved_from);
@@ -195,14 +195,28 @@ static void adjust_watchers(const struct inotify_event *event) {
             // matching event -> rename
             // just rename, keep watches
             // fprintf(fp, "RENAME keep watch inside\n");
+
             char *moved_to;
             full_path(&moved_to, event);
+
+            if (is_excluded_folder(moved_from) &&
+                !is_excluded_folder(moved_to)) {
+                // printf("add watch yes %s\n", moved_to);
+                // storage_add
+                add_watch(moved_to);
+            } else if (!is_excluded_folder(moved_from) &&
+                       is_excluded_folder(moved_to)) {
+                //    printf("rm watch")
+                remove_watch_by_path(moved_from);
+            }
+
+            storage_rename(moved_from, moved_to);
+
             // storage_print();
             // fprintf(fp, "moved from %s\n", moved_from);
             // fprintf(fp, "moved to %s\n", moved_to);
             // printf("storage rename\n");
             // fflush(stdout);
-            storage_rename(moved_from, moved_to);
             // storage_print();
             free(moved_from);
             moved_from = 0;

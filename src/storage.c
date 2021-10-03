@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,6 +59,7 @@ void storage_rename(const char *moved_from, const char *moved_to) {
     ListNode *node = head;
     int len_from = strlen(moved_from);
     int len_to = strlen(moved_to);
+    bool found = false;
     while (node != NULL) {
         // fflush(stdout);
         // int len_node = strlen(node->fpath);
@@ -65,6 +67,7 @@ void storage_rename(const char *moved_from, const char *moved_to) {
         // fflush(stdout);
         if (strncmp(moved_from, node->fpath, len_from) == 0) {
             memcpy(node->fpath, moved_to, len_from);
+            found = true;
             // // char *new_name;
             // // asprintf
             // printf("MATCH, has been renamed\n");

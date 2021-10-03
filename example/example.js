@@ -1,9 +1,10 @@
 import { spawn } from "child_process";
 import execa from "execa";
-import { mkdir, mkdtemp, writeFile } from "fs/promises";
+import { mkdir, mkdtemp, rename, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import pidusage from "pidusage";
+import { setTimeout } from "timers/promises";
 
 const exec = async (file, args) => {
   await execa(file, args);
@@ -62,27 +63,26 @@ const createWatcher = async (args = [], options = {}) => {
 
 const main = async () => {
   const tmpDir = await getTmpDir();
-  await Promise.all([
-    mkdir(`${tmpDir}/a/a/a`, { recursive: true }),
-    mkdir(`${tmpDir}/b/b/b`, { recursive: true }),
-    mkdir(`${tmpDir}/c/c/c`, { recursive: true }),
-    mkdir(`${tmpDir}/d/d/d`, { recursive: true }),
-  ]);
-  const watcher = await createWatcher([
-    tmpDir,
-    "--exclude",
-    "a",
-    "--exclude",
-    "b",
-    "--exclude",
-    "c",
-  ]);
-  await writeFile(`${tmpDir}/a/1.txt`, "");
-  await writeFile(`${tmpDir}/b/1.txt`, "");
-  await writeFile(`${tmpDir}/c/1.txt`, "");
-  await writeFile(`${tmpDir}/d/1.txt`, "");
-  await writeFile(`${tmpDir}/1.txt`, "");
-  await writeFile(`${tmpDir}/d/1.txt`, "");
+  await mkdir(`${tmpDir}/b`);
+  const watcher = await createWatcher([tmpDir, "--exclude", "a"]);
+  await rename(`${tmpDir}/b`, `${tmpDir}/a`);
+  //   await waitForExpect(() => {
+  //     expect(watcher.stdout).toBe(`${tmpDir}/b,MOVED_FROM_DIR
+  // ${tmpDir}/a,MOVED_TO_DIR
+  // `);
+  //   });
+  // watcher.clear();
+  await writeFile(`${tmpDir}/a/a.txt`, "");
+  await writeFile(`${tmpDir}/c.txt`, "");
+  //   await waitForExpect(() => {
+  //     expect(watcher.stdout).toBe(`
+  // `);
+  //   });
+  //   await waitForExpect(() => {
+  //     expect(watcher.stdout).toBe(`${tmpDir}/b/b.txt,CREATE
+  // ${tmpDir}/b/b.txt,CLOSE_WRITE
+  // `);
+  //   });
   // console.log(watcher.stdout);
 };
 
