@@ -16,6 +16,9 @@
 #define TOOL_NAME "hello"
 #define TOOL_VERSION "0.0.1"
 
+extern char** exclude;
+extern int excludec;
+
 static const char short_options[] = "e:hv";
 
 static const struct option long_options[] = {
@@ -41,8 +44,6 @@ static void print_usage() {
 
 int main(int argc, char* argv[]) {
     opterr = 0;
-    char** exclude;
-    int excludec = 0;
     int index = 0;
     int c = 0;
     int help = 0;

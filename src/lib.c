@@ -15,6 +15,8 @@
 #include "storage.h"
 
 extern int fd;
+char **exclude;
+int excludec = 0;
 
 char *moved_from = 0;
 
@@ -331,6 +333,7 @@ static void handle_events(int fd) {
 }
 
 void watch(const char *folder) {
+    // TODO pass exclude to global exclude
     char buf;
     int poll_num;
     nfds_t nfds;

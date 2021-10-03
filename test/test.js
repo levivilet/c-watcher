@@ -1075,7 +1075,7 @@ ${tmpDir}/1/2/3/4/5/6/7/8/9/new.txt,CLOSE_WRITE
   watcher.dispose();
 });
 
-test("folder move race condition", async () => {
+test.skip("folder move race condition", async () => {
   waitForExpect.defaults.timeout = 100;
   // this tests a very specific bug when a folder is moved in
   // it can happen that the watch for is not yet established
@@ -1731,11 +1731,6 @@ test("change folder attribute", async () => {
 // TODO test softlink and hardlinks
 
 // TODO test exclude
-
-// TODO test cli
-// - version
-// - help
-// - should output error on invalid options
 
 test("cli help", async () => {
   const watcher = await createCliWatcher(["--help"]);
