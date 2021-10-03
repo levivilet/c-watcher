@@ -5,8 +5,10 @@
 #include <errno.h>
 #include <ftw.h>
 #include <poll.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/inotify.h>
 #include <time.h>
 #include <unistd.h>
@@ -62,19 +64,17 @@ int main(int argc, char* argv[]) {
                     print_usage();
                     exit(2);
                 }
-                excludec++;
-                if (excludec == 1) {
-                    exclude = malloc(excludec * sizeof(char*));
-                    exclude[excludec - 1] = optarg;
+                if (excludec == 0) {
+                    exclude = malloc(sizeof(char*));
+                    exclude[excludec] = optarg;
                 } else {
                     char** old_exclude = exclude;
                     exclude = malloc(excludec * sizeof(char*));
-                    for (int i = 0; i < excludec - 1; i++) {
-                        exclude[i] = old_exclude[i];
-                    }
-                    exclude[excludec - 1] = optarg;
+                    memcpy(exclude, old_exclude, (excludec) * sizeof(char*));
+                    exclude[excludec] = optarg;
                     free(old_exclude);
                 }
+                excludec++;
                 break;
             case 'v':
                 version = 1;
