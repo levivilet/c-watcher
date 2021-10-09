@@ -46,7 +46,6 @@ static void print_usage() {
 
 int main(int argc, char* argv[]) {
     opterr = 0;
-    int index = 0;
     int c = 0;
     int help = 0;
     int version = 0;

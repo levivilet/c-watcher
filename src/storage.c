@@ -58,7 +58,7 @@ void storage_rename(const char *moved_from, const char *moved_to) {
     // printf("node check %s %s\n", moved_from, moved_to);
     ListNode *node = head;
     int len_from = strlen(moved_from);
-    int len_to = strlen(moved_to);
+    // int len_to = strlen(moved_to);
     // bool found = false;
     while (node != NULL) {
         // fflush(stdout);
@@ -123,8 +123,7 @@ void storage_find_and_remove_by_path(const char *fpath, void (*cb)(int wd)) {
     while (node != NULL) {
         // fprintf(stdout, "compare %s with %s\n", fpath, node->fpath);
         if (strncmp(node->fpath, fpath, len) == 0 &&
-                strlen(node->fpath) == len ||
-            node->fpath[len] == '/') {
+            (strlen(node->fpath) == len || node->fpath[len] == '/')) {
             int wd = node->wd;
             // fprintf(stdout, "found wd %d\n", wd);
             // fflush(stdout);

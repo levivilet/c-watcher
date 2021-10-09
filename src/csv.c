@@ -18,7 +18,7 @@ bool csv_needs_escape(const char* str) {
     return false;
 }
 
-char* csv_escape(char** escaped, const char* str) {
+void csv_escape(char** escaped, const char* str) {
     int len = strlen(str);
     int escapes = 0;
     for (int i = 0; i < len; i++) {
