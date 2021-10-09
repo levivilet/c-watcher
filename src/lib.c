@@ -362,10 +362,7 @@ static void handle_events(int fd) {
 
 void watch(const char *folder) {
     // TODO pass exclude to global exclude
-    char buf;
     int poll_num;
-    nfds_t nfds;
-    struct pollfd fds[2];
 
     notify_init();
 
@@ -384,10 +381,8 @@ void watch(const char *folder) {
 
     /* Prepare for polling. */
 
-    nfds = 1;
-
-    fds[0].fd = fd; /* Inotify input */
-    fds[0].events = POLLIN;
+    nfds_t nfds = 1;
+    struct pollfd fds[] = {{fd, POLLIN}};
 
     /* Wait for events and/or terminal input. */
 
