@@ -9,6 +9,7 @@ import {
   readdir,
   rename,
   rm,
+  symlink,
   writeFile,
 } from "fs/promises";
 import { tmpdir } from "os";
@@ -33,6 +34,7 @@ const getTmpDir = () => {
 const createWatcher = async (args = []) => {
   const child = spawn("./hello", args);
   let result = "";
+  let status = "normal";
   child.stdout.on("data", (data) => {
     result += data.toString();
   });
@@ -50,6 +52,7 @@ const createWatcher = async (args = []) => {
     if (code == 1) {
       throw new Error("exit code 1");
     }
+    status = "exited";
   });
 
   return {
@@ -61,6 +64,9 @@ const createWatcher = async (args = []) => {
     },
     clear() {
       result = "";
+    },
+    get status() {
+      return status;
     },
   };
 };
@@ -1891,6 +1897,48 @@ test("exclude multiple folders", async () => {
     expect(watcher.stdout).toBe(`${tmpDir}/d/1.txt,CREATE
 ${tmpDir}/d/1.txt,CLOSE_WRITE
 `);
+  });
+  watcher.dispose();
+});
+
+test("symlinked file", async () => {
+  const tmpDir = await getTmpDir();
+  await writeFile(`${tmpDir}/a.txt`, "");
+  await symlink(`${tmpDir}/a.txt`, `${tmpDir}/b.txt`);
+  const watcher = await createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/a.txt`, "aaa");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a.txt,MODIFY
+${tmpDir}/a.txt,MODIFY
+${tmpDir}/a.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+test("symlinked folder", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/a`);
+  await symlink(`${tmpDir}/a`, `${tmpDir}/b`);
+  const watcher = await createWatcher([tmpDir]);
+  await writeFile(`${tmpDir}/b/1.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a/1.txt,CREATE
+${tmpDir}/a/1.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+// TODO test hardlink
+
+test.skip("delete watched folder", async () => {
+  const tmpDir = await getTmpDir();
+  const watcher = await createWatcher([tmpDir]);
+  await rm(tmpDir, { recursive: true });
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(``);
+    expect(watcher.status).toBe("normal");
   });
   watcher.dispose();
 });
