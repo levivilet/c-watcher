@@ -1,4 +1,4 @@
-# c watcher
+# c-watcher
 
 Recursive file watcher for linux similar to [inotifywait](https://github.com/inotify-tools/inotify-tools). The focus of this project is to have low memory usage for recursively watching folders using the inotify api.
 
@@ -8,14 +8,21 @@ Recursive file watcher for linux similar to [inotifywait](https://github.com/ino
 ./hello sample-folder
 ```
 
-## Output
+Then do some file operations:
 
-The output is in csv format, for example:
+```sh
+touch sample-folder/file.txt
+```
+
+It will print the files operations in csv format:
 
 ```
 sample-folder/file.txt,CREATE
+sample-folder/file.txt,ATTRIB
 sample-folder/file.txt,CLOSE_WRITE
 ```
+
+## Events
 
 The following events can be emitted:
 
