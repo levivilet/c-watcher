@@ -1,12 +1,12 @@
 import { spawn } from "child_process";
+import csv from "csv-parser";
+import execa from "execa";
 import {
   appendFile,
   chmod,
-  chown,
   copyFile,
   mkdir,
   mkdtemp,
-  readdir,
   rename,
   rm,
   symlink,
@@ -15,8 +15,6 @@ import {
 import { tmpdir } from "os";
 import { join } from "path";
 import waitForExpect from "wait-for-expect";
-import execa from "execa";
-import csv from "csv-parser";
 
 const exec = async (file, args) => {
   await execa(file, args);

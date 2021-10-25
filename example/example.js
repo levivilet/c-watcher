@@ -1,10 +1,9 @@
 import { spawn } from "child_process";
 import execa from "execa";
-import { mkdir, mkdtemp, rename, writeFile } from "fs/promises";
+import { mkdir, mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import pidusage from "pidusage";
-import { setTimeout } from "timers/promises";
 
 const exec = async (file, args) => {
   await execa(file, args);
@@ -65,27 +64,8 @@ const main = async () => {
   const tmpDir = await getTmpDir();
   await mkdir(`${tmpDir}/b`);
   const s = performance.now();
-  const watcher = await createWatcher(["/home/simon/.cache/repos/vscode"]);
+  const watcher = await createWatcher([tmpDir]);
   console.log(performance.now() - s);
-  // await rename(`${tmpDir}/b`, `${tmpDir}/a`);
-  //   await waitForExpect(() => {
-  //     expect(watcher.stdout).toBe(`${tmpDir}/b,MOVED_FROM_DIR
-  // ${tmpDir}/a,MOVED_TO_DIR
-  // `);
-  //   });
-  // watcher.clear();
-  // await writeFile(`${tmpDir}/a/a.txt`, "");
-  // await writeFile(`${tmpDir}/c.txt`, "");
-  //   await waitForExpect(() => {
-  //     expect(watcher.stdout).toBe(`
-  // `);
-  //   });
-  //   await waitForExpect(() => {
-  //     expect(watcher.stdout).toBe(`${tmpDir}/b/b.txt,CREATE
-  // ${tmpDir}/b/b.txt,CLOSE_WRITE
-  // `);
-  //   });
-  // console.log(watcher.stdout);
 };
 
 main();
