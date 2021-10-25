@@ -265,9 +265,6 @@ static void adjust_watchers(const struct inotify_event *event) {
         }
         free(fpath);
     }
-    // if(event->mask & IN_DELETE){
-
-    // }
     if (event->mask & IN_MOVED_FROM) {
         // fprintf(fp, "SET MOVED_FROM EVENT\n");
         // fprintf(fp, "SET MOVED_FROM EVENT NAME %s\n", event->name);
