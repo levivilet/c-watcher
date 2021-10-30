@@ -58,15 +58,37 @@ void storage_rename(const char *moved_from, const char *moved_to) {
     // printf("node check %s %s\n", moved_from, moved_to);
     ListNode *node = head;
     int len_from = strlen(moved_from);
+    int len_to = strlen(moved_to);
     // int len_to = strlen(moved_to);
     // bool found = false;
+
+    // /tmp/a
+    // /tmp/a/b
+    // /tmp/a/b/c
+
+    // /tmp/f2
+    // /tmp/f2/b
+    // /tmp/f2/b/c
     while (node != NULL) {
         // fflush(stdout);
         // int len_node = strlen(node->fpath);
         // printf("check %s\n", node);
         // fflush(stdout);
+        // TODO bug
         if (strncmp(moved_from, node->fpath, len_from) == 0) {
-            memcpy(node->fpath, moved_to, len_from);
+            // TODO need use malloc and free when len_to is greater than
+            // len_from
+            if (len_from == len_to) {
+                memcpy(node->fpath, moved_to, len_from);
+            } else {
+                int count = strlen(node->fpath) + len_to - len_from + 1;
+                char *oldPath = node->fpath;
+                node->fpath = malloc(count);
+                int max = len_to > len_from ? len_to : len_from;
+                memcpy(node->fpath, moved_to, max);
+                memcpy(node->fpath + max, oldPath + len_from, count - max);
+                free(oldPath);
+            }
             // found = true;
             // // char *new_name;
             // // asprintf

@@ -1992,3 +1992,26 @@ test("cli unknown option", async () => {
 });
 
 // TODO move folder inside out
+
+test("rename when moved_to folder name is longer", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/a/b/c`, { recursive: true });
+  await mkdir(`${tmpDir}/f`);
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/a`, `${tmpDir}/f2`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a,MOVED_FROM_DIR
+${tmpDir}/f2,MOVED_TO_DIR
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/f2/g.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/f2/g.txt,CREATE
+${tmpDir}/f2/g.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});
+
+// TODO test when moved_to len is smaller than moved_from len
