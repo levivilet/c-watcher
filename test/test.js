@@ -978,8 +978,8 @@ test("rename subtree", async () => {
   await waitForExpect(() => {
     expect(watcher.stdout).toBe(`${tmpDir}/1/2/3/4/5,MOVED_FROM_DIR
 ${tmpDir}/1/5,MOVED_TO_DIR
-${tmpDir}/1/5/a.txt,CREATE
-${tmpDir}/1/5/a.txt,CLOSE_WRITE
+${tmpDir}/1/5/6/7/a.txt,CREATE
+${tmpDir}/1/5/6/7/a.txt,CLOSE_WRITE
 `);
   });
   watcher.dispose();
