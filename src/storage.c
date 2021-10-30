@@ -74,10 +74,7 @@ void storage_rename(const char *moved_from, const char *moved_to) {
         // int len_node = strlen(node->fpath);
         // printf("check %s\n", node);
         // fflush(stdout);
-        // TODO bug
         if (strncmp(moved_from, node->fpath, len_from) == 0) {
-            // TODO need use malloc and free when len_to is greater than
-            // len_from
             if (len_from == len_to) {
                 memcpy(node->fpath, moved_to, len_from);
             } else {
