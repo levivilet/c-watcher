@@ -1993,7 +1993,7 @@ test("cli unknown option", async () => {
 
 // TODO move folder inside out
 
-test("rename when moved_to folder name is longer", async () => {
+test("rename when moved_to folder name is longer than moved_from", async () => {
   const tmpDir = await getTmpDir();
   await mkdir(`${tmpDir}/a/b/c`, { recursive: true });
   await mkdir(`${tmpDir}/f`);
@@ -2014,4 +2014,23 @@ ${tmpDir}/f2/g.txt,CLOSE_WRITE
   watcher.dispose();
 });
 
-// TODO test when moved_to len is smaller than moved_from len
+test("rename when moved_from folder name is longer than moved_to", async () => {
+  const tmpDir = await getTmpDir();
+  await mkdir(`${tmpDir}/f2`);
+  await mkdir(`${tmpDir}/a/b/c`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/a`, `${tmpDir}/f`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a,MOVED_FROM_DIR
+${tmpDir}/f,MOVED_TO_DIR
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/f/g.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/f/g.txt,CREATE
+${tmpDir}/f/g.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});

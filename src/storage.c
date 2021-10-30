@@ -39,6 +39,9 @@ void storage_add(int wd, const char *fpath) {
     new_node->fpath = strdup(fpath);
     new_node->next = head;
     head = new_node;
+    // fprintf(stdout, "%d\n", new_node);
+    // fprintf(stdout, "size: %d\n", sizeof(ListNode));
+    // fflush(stdout);
     // current->next = next;
     // current = next;
 }
