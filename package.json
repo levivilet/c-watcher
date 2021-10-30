@@ -9,7 +9,7 @@
     "build": "gcc -Wall src/lib.c src/csv.c src/storage.c src/notify.c src/hello.c -o hello",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js test/test.js --detectOpenHandles --forceExit",
     "test:all": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
-    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js test/test.js --watch"
   },
   "keywords": [],
   "author": "",

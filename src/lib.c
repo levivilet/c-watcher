@@ -111,6 +111,10 @@ static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
     return FTW_CONTINUE;
 }
 
+// TODO what happens when file is created during nftw visit
+// file can be missed?
+
+
 /* Walk folder recursively and setup watcher for each file */
 static void watch_recursively(const char *dir) {
     // fprintf(fp, "watch recursively %s\n", dir);
@@ -144,7 +148,6 @@ static void watch_recursively(const char *dir) {
         }
         // printf()
         // printf("errno addr %d\n", errno);
-        // fflush(stdout);
         // printf("errno %s\n", strerror(errno));
         fflush(stdout);
         perror("nftw");
@@ -175,8 +178,6 @@ static void output_event(const struct inotify_event *event) {
     } else {
         fprintf(stdout, "%s/%s,%s\n", node->fpath, event->name, event_string);
     }
-    // TODO more efficient buffer handling
-    fflush(stdout);
 }
 
 static void adjust_watchers(const struct inotify_event *event) {
@@ -217,14 +218,12 @@ static void adjust_watchers(const struct inotify_event *event) {
             // fprintf(fp, "moved from %s\n", moved_from);
             // fprintf(fp, "moved to %s\n", moved_to);
             // printf("storage rename\n");
-            // fflush(stdout);
             // storage_print();
             free(moved_from);
             moved_from = 0;
             free(moved_to);
             // storage_print();
             // printf("done storage rename\n");
-            // fflush(stdout);
             // printf("new full path %s\n", fpath);
             return;
         }
@@ -354,7 +353,7 @@ static void handle_events(int fd) {
         // storage_print(fp);
         // printf("done\n");
     }
-    // fflush(stdout);
+    fflush(stdout);
 }
 
 void watch(const char *folder) {
