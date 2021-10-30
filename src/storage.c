@@ -84,7 +84,6 @@ void storage_rename(const char *moved_from, const char *moved_to) {
                 int count = strlen(node->fpath) + len_to - len_from + 1;
                 char *oldPath = node->fpath;
                 node->fpath = malloc(count);
-                int max = len_to > len_from ? len_to : len_from;
                 memcpy(node->fpath, moved_to, len_to);
                 memcpy(node->fpath + len_to, oldPath + len_from,
                        count - len_to);
