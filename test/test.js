@@ -1945,14 +1945,16 @@ test.skip("delete watched folder", async () => {
 test("cli help", async () => {
   const watcher = await createCliWatcher(["--help"]);
   await waitForExpect(() => {
-    expect(watcher.stdout).toBe(`hello 0.0.1
-Recursively watch a folder for changes
-Usage: hello [ options ] sample-folder
-Options:
-\t-h|--help     \tShow this help text.
-\t--exclude <name>
-\t              \tExclude all events on files matching <name>
-`);
+    expect(watcher.stdout.split("\n")).toEqual([
+      expect.stringMatching(/hello \d+\.\d+\.\d+/),
+      "Recursively watch a folder for changes",
+      "Usage: hello [ options ] sample-folder",
+      "Options:",
+      "\t-h|--help     \tShow this help text.",
+      "\t--exclude <name>",
+      "\t              \tExclude all events on files matching <name>",
+      "",
+    ]);
   });
   watcher.dispose();
 });
