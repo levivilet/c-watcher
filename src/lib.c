@@ -79,8 +79,8 @@ static bool is_excluded_folder(const char *fpath) {
 static void full_path(char **fpath, const struct inotify_event *event) {
     ListNode *node = storage_find(event->wd);
     if (asprintf(fpath, "%s/%s", node->fpath, event->name) == -1) {
-        printf("asprintf error");
-        fflush(stdout);
+        fprintf(stderr, "asprintf error");
+        fflush(stderr);
         perror("asprintf");
         exit(EXIT_FAILURE);
     }
@@ -158,7 +158,7 @@ static void output_event(const struct inotify_event *event) {
     // TODO put this after getting node
     const char *event_string = get_event_string(event);
     if (!event->len || !event_string) {
-        fprintf(stderr, "no event string");
+        fprintf(stderr, "no event string\n");
         // exit(EXIT_FAILURE);
         return;
     }
@@ -178,7 +178,7 @@ static void output_event(const struct inotify_event *event) {
         free(fpath);
     } else {
         fprintf(stdout, "%s/%s,%s\n", node->fpath, event->name, event_string);
-        // fprintf(stderr, "%s/%s,%s,%d\n", node->fpath, event->name,
+        // fprintf(stdout, "%s/%s,%s,%d\n", node->fpath, event->name,
         // event_string,
         //         event->cookie);
     }
@@ -278,8 +278,8 @@ static void adjust_watchers(const struct inotify_event *event) {
     }
 
     if (event->mask & IN_Q_OVERFLOW) {
-        fprintf(stdout, "queue overflow\n");
-        fflush(stdout);
+        fprintf(stderr, "queue overflow\n");
+        fflush(stderr);
         fprintf(stderr, "Inotify event queue overflow.\n");
         exit(EXIT_FAILURE);
     }
@@ -319,8 +319,8 @@ static void handle_events(int fd) {
         len = read(fd, buf, sizeof(buf));
         // printf("LEN: %d\n", len);
         if (len == -1 && errno != EAGAIN) {
-            printf("read error");
-            fflush(stdout);
+            printf("read error\n");
+            fflush(stderr);
             perror("read");
             exit(EXIT_FAILURE);
         }
@@ -391,8 +391,8 @@ void watch(const char *folder) {
         poll_num = poll(fds, nfds, -1);
         if (poll_num == -1) {
             if (errno == EINTR) continue;
-            printf("poll error");
-            fflush(stdout);
+            fprintf(stderr, "poll error\n");
+            fflush(stderr);
             perror("poll");
             exit(EXIT_FAILURE);
         }

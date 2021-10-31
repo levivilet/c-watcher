@@ -10,8 +10,8 @@ int fd = -1;
 void notify_init() {
     fd = inotify_init1(IN_NONBLOCK);
     if (fd == -1) {
-        fprintf(stdout, "inotify init error %s\n", strerror(errno));
-        fflush(stdout);
+        fprintf(stderr, "inotify init error %s\n", strerror(errno));
+        fflush(stderr);
         perror("inotify_init1");
         exit(EXIT_FAILURE);
     }
