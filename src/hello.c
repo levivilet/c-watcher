@@ -16,7 +16,7 @@
 #include "lib.h"
 
 #define TOOL_NAME "hello"
-#define TOOL_VERSION "0.0.1"
+#define TOOL_VERSION "0.0.5"
 
 extern char** exclude;
 extern int excludec;

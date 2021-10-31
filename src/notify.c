@@ -49,6 +49,9 @@ void notify_print_event(const struct inotify_event *event, void *out) {
     if (event->len) {
         fprintf(out, "name %s\n", event->name);
     }
+    if (event->cookie) {
+        fprintf(out, "cookie %d\n", event->cookie);
+    }
     fprintf(out, "wd %d\n", event->wd);
     if (event->mask & IN_OPEN) fprintf(out, "type OPEN\n");
     if (event->mask & IN_CLOSE_NOWRITE) fprintf(out, "type CLOSE_NOWRITE\n");

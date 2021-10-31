@@ -39,11 +39,14 @@ void storage_add(int wd, const char *fpath) {
     new_node->fpath = strdup(fpath);
     new_node->next = head;
     head = new_node;
+
     // fprintf(stdout, "%d\n", new_node);
     // fprintf(stdout, "size: %d\n", sizeof(ListNode));
     // fflush(stdout);
     // current->next = next;
     // current = next;
+
+    // storage_print(stdout);
 }
 
 ListNode *storage_find(int wd) {
@@ -97,6 +100,7 @@ void storage_rename(const char *moved_from, const char *moved_to) {
         }
         node = node->next;
     }
+    // storage_print(stdout);
 }
 
 void storage_remove_by_wd(int wd) {
@@ -125,6 +129,7 @@ void storage_remove_by_wd(int wd) {
     // fflush(stdout);
     // fprintf(stderr, "node is NULL, extremely unlucky user");
     // exit(EXIT_FAILURE);
+    // storage_print(stdout);
 }
 
 int storage_find_by_path(const char *fpath) {

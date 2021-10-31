@@ -93,7 +93,7 @@ static void add_watch(const char *fpath) {
     // TODO use dynamic array (or better tree)
     storage_add(wd, fpath);
     // storage_print(fp);
-    // storage_print();
+    // storage_print(stdout);
 }
 
 static void remove_watch_by_path(const char *fpath) {
@@ -159,6 +159,7 @@ static void output_event(const struct inotify_event *event) {
     const char *event_string = get_event_string(event);
     if (!event->len || !event_string) {
         fprintf(stderr, "no event string\n");
+        // notify_print_event(event, stdout);
         // exit(EXIT_FAILURE);
         return;
     }
@@ -190,6 +191,7 @@ static void adjust_watchers(const struct inotify_event *event) {
 
     if (moved_from) {
         // fprintf(stdout, "HAS MOVED FROM EVENT POTENTIAL RENAME\n");
+        // fflush(stdout);
         // TODO check cookie
         if (event->mask & IN_ISDIR && event->mask & IN_MOVED_TO) {
             // fprintf(fp, "moved from name %s\n", moved_from);
@@ -200,7 +202,7 @@ static void adjust_watchers(const struct inotify_event *event) {
             // fprintf(fp, "done printing events again");
             // matching event -> rename
             // just rename, keep watches
-            // fprintf(fp, "RENAME keep watch inside\n");
+            // fprintf(stdout, "RENAME keep watch inside\n");
 
             char *moved_to;
             full_path(&moved_to, event);
@@ -246,7 +248,7 @@ static void adjust_watchers(const struct inotify_event *event) {
     if (!(event->mask & IN_ISDIR)) {
         if (event->mask & IN_IGNORED) {
             // folder has been ignored -> remove from storage
-            // fprintf(fp, "!!!IGNORED!!! %d\n", event->wd);
+            // fprintf(stdout, "!!!IGNORED!!! %d\n", event->wd);
             // fprintf(fp, "LEN %d\n", event->len);
             // if (event->len) {
             // fprintf(fp, "NAME %s\n", event->name);
