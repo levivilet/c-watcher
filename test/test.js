@@ -2034,3 +2034,40 @@ ${tmpDir}/f/g.txt,CLOSE_WRITE
   });
   watcher.dispose();
 });
+
+// TODO test moved_from and unrelated moved_to event
+
+test("moved_from and unrelated moved_to event", async () => {
+  const tmpDir = await getTmpDir();
+  const tmpDir2 = await getTmpDir();
+  await mkdir(`${tmpDir2}/f2`);
+  await mkdir(`${tmpDir}/a/b/c`, { recursive: true });
+  const watcher = await createWatcher([tmpDir]);
+  await rename(`${tmpDir}/a`, `${tmpDir2}/a`);
+  await rename(`${tmpDir2}/f2`, `${tmpDir}/a`);
+  await rename(`${tmpDir2}/a`, `${tmpDir}/b`);
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a,MOVED_FROM_DIR
+${tmpDir}/a,MOVED_TO_DIR
+${tmpDir}/b,MOVED_TO_DIR
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/a/g.txt`, "");
+  await writeFile(`${tmpDir}/b/h.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/a/g.txt,CREATE
+${tmpDir}/a/g.txt,CLOSE_WRITE
+${tmpDir}/b/h.txt,CREATE
+${tmpDir}/b/h.txt,CLOSE_WRITE
+`);
+  });
+  watcher.clear();
+  await writeFile(`${tmpDir}/b/b/b.txt`, "");
+  await waitForExpect(() => {
+    expect(watcher.stdout).toBe(`${tmpDir}/b/b/b.txt,CREATE
+${tmpDir}/b/b/b.txt,CLOSE_WRITE
+`);
+  });
+  watcher.dispose();
+});

@@ -114,7 +114,6 @@ static int visit_dirent(const char *fpath, const struct stat *sb, int tflag,
 // TODO what happens when file is created during nftw visit
 // file can be missed?
 
-
 /* Walk folder recursively and setup watcher for each file */
 static void watch_recursively(const char *dir) {
     // fprintf(fp, "watch recursively %s\n", dir);
@@ -159,6 +158,8 @@ static void output_event(const struct inotify_event *event) {
     // TODO put this after getting node
     const char *event_string = get_event_string(event);
     if (!event->len || !event_string) {
+        fprintf(stderr, "no event string");
+        // exit(EXIT_FAILURE);
         return;
     }
     ListNode *node = storage_find(event->wd);
@@ -177,6 +178,9 @@ static void output_event(const struct inotify_event *event) {
         free(fpath);
     } else {
         fprintf(stdout, "%s/%s,%s\n", node->fpath, event->name, event_string);
+        // fprintf(stderr, "%s/%s,%s,%d\n", node->fpath, event->name,
+        // event_string,
+        //         event->cookie);
     }
 }
 
