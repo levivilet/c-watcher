@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import execa from "execa";
+import { execa } from "execa";
 import { mkdir, mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";

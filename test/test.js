@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import csv from "csv-parser";
-import execa from "execa";
+import {execa} from "execa";
 import {
   appendFile,
   chmod,
