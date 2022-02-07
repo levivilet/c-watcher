@@ -19,7 +19,7 @@
     "@types/pidusage": "^2.0.2",
     "csv-parser": "^3.0.0",
     "execa": "^6.0.0",
-    "jest": "^27.4.5",
+    "jest": "^27.5.0",
     "nodemon": "^2.0.15",
     "pidusage": "^3.0.0",
     "wait-for-expect": "^3.0.2"
