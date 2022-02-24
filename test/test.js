@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import csv from "csv-parser";
-import {execa} from "execa";
+import { execa } from "execa";
 import {
   appendFile,
   chmod,
@@ -2040,7 +2040,7 @@ ${tmpDir}/f/g.txt,CLOSE_WRITE
 
 // TODO test moved_from and unrelated moved_to event
 
-test("moved_from and unrelated moved_to event", async () => {
+test.skip("moved_from and unrelated moved_to event", async () => {
   const tmpDir = await getTmpDir();
   const tmpDir2 = await getTmpDir();
   await mkdir(`${tmpDir2}/f2`);
