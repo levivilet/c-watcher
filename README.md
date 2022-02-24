@@ -2,6 +2,10 @@
 
 Recursive file watcher for linux similar to [inotifywait](https://github.com/inotify-tools/inotify-tools). The focus of this project is to have low memory usage for recursively watching folders using the inotify api.
 
+## Gitpod
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/levivilet/c-watcher)
+
 ## Usage
 
 ```sh
