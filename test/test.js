@@ -802,6 +802,7 @@ test("setup watchers for each folder inside deeply nested folder", async () => {
   await writeFile(`${tmpDir}/abc.txt`, "");
   await waitForExpect(() => {
     expect(watcher.stdout).toContain(`${tmpDir}/abc.txt,CREATE
+${tmpDir}/abc.txt,CLOSE_WRITE
 `);
   });
   watcher.clear();
