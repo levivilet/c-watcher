@@ -66,7 +66,7 @@ test("memory should stay the same when adding files", async () => {
   const finalStats = await getStats(watcher.pid);
   expect(initialStats.memory).toBe(finalStats.memory);
   watcher.dispose();
-}, 20_000);
+}, 60_000);
 
 test("memory should not grow when adding and removing folders", async () => {
   const tmpDir = await getTmpDir();
@@ -131,7 +131,7 @@ test("memory should not grow when adding and removing folders", async () => {
   expect(middleStats4.memory).toBeLessThanOrEqual(middleStats3.memory);
   expect(finalStats.memory).toBeLessThanOrEqual(middleStats4.memory);
   watcher.dispose();
-}, 40_000);
+}, 60_000);
 
 test("memory should not grow when moving out folders", async () => {
   const RUNS = 5_000;
@@ -185,4 +185,4 @@ test("memory should not grow when moving out folders", async () => {
   expect(middleStats4.memory).toBeLessThanOrEqual(middleStats3.memory);
   expect(finalStats.memory).toBeLessThanOrEqual(middleStats4.memory);
   watcher.dispose();
-}, 40_000);
+}, 60_000);
