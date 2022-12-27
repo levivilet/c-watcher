@@ -15,7 +15,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^29.2.2",
+    "@types/jest": "^29.2.4",
     "@types/pidusage": "^2.0.2",
     "csv-parser": "^3.0.0",
     "execa": "^6.1.0",
