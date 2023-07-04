@@ -1,8 +1,8 @@
-import { spawn } from "child_process";
+import { spawn } from "node:child_process";
 import { execa } from "execa";
-import { mkdir, mkdtemp } from "fs/promises";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdir, mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import pidusage from "pidusage";
 
 const exec = async (file, args) => {
@@ -18,6 +18,21 @@ const getTmpDir = () => {
   return mkdtemp(join(tmpdir(), "foo-"));
 };
 
+const waitForWatcherReady = async (child) => {
+  await new Promise((resolve) => {
+    const cleanup = () => {
+      child.stderr.off("data", handleData);
+      resolve(undefined);
+    };
+    const handleData = (data) => {
+      if (data.toString().includes("Watches established.")) {
+        cleanup();
+      }
+    };
+    child.stderr.on("data", handleData);
+  });
+};
+
 /**
  *
  * @param {readonly string[]} args
@@ -26,6 +41,9 @@ const getTmpDir = () => {
  */
 const createWatcher = async (args = [], options = {}) => {
   const child = spawn("./hello", args, options);
+  if (!child.stdout) {
+    throw new Error(`stdout is not available`);
+  }
   let result = "";
   child.stdout.on("data", (data) => {
     console.log(data.toString());
@@ -34,15 +52,7 @@ const createWatcher = async (args = [], options = {}) => {
   child.on("exit", (code) => {
     console.log("exit", code);
   });
-  await new Promise((resolve) => {
-    const handleData = (data) => {
-      if (data.toString().includes("Watches established.")) {
-        child.stderr.off("data", handleData);
-        resolve();
-      }
-    };
-    child.stderr.on("data", handleData);
-  });
+  await waitForWatcherReady(child);
 
   return {
     get stdout() {
@@ -64,7 +74,7 @@ const main = async () => {
   const tmpDir = await getTmpDir();
   await mkdir(`${tmpDir}/b`);
   const s = performance.now();
-  const watcher = await createWatcher([tmpDir]);
+  const watcher = await createWatcher(["/home/simon"]);
   console.log(performance.now() - s);
 };
 

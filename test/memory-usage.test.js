@@ -1,9 +1,9 @@
-import { spawn } from "child_process";
-import { mkdir, mkdtemp, rename, rm, writeFile } from "fs/promises";
-import { tmpdir } from "os";
-import { join } from "path";
+import { spawn } from "node:child_process";
+import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import pidusage from "pidusage";
-import { setTimeout } from "timers/promises";
+import { setTimeout } from "node:timers/promises";
 import waitForExpect from "wait-for-expect";
 
 const getStats = async (pid) => {
@@ -15,6 +15,21 @@ const getTmpDir = () => {
   return mkdtemp(join(tmpdir(), "foo-"));
 };
 
+const waitForWatcherReady = async (child) => {
+  await new Promise((resolve) => {
+    const cleanup = () => {
+      child.stderr.off("data", handleData);
+      resolve(undefined);
+    };
+    const handleData = (data) => {
+      if (data.toString().includes("Watches established.")) {
+        cleanup();
+      }
+    };
+    child.stderr.on("data", handleData);
+  });
+};
+
 /**
  *
  * @param {readonly string[]} args
@@ -23,19 +38,14 @@ const getTmpDir = () => {
  */
 export const createWatcher = async (args = [], options = {}) => {
   const child = spawn("./hello", args, options);
-  await new Promise((resolve) => {
-    const handleData = (data) => {
-      if (data.toString().includes("Watches established.")) {
-        child.stderr.off("data", handleData);
-        resolve();
-      }
-    };
-    child.stderr.on("data", handleData);
-  });
+  if (!child.stdout) {
+    throw new Error(`stdout is not available`);
+  }
   let eventCount = 0;
   child.stdout.on("data", (data) => {
     eventCount += data.toString().split("\n").length - 1;
   });
+  await waitForWatcherReady(child);
   return {
     dispose() {
       child.kill();
