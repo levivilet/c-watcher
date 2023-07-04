@@ -1,11 +1,32 @@
-name: CI
+# Based on https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml by BurntSushi (License MIT)
 
+name: release
 on:
   push:
-    branches:
-      - main
-
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
 jobs:
+  create-release:
+    name: create-release
+    runs-on: ubuntu-22.04
+    outputs:
+      upload_url: ${{ steps.release.outputs.upload_url }}
+      rg_version: ${{ env.RG_VERSION }}
+    steps:
+      - name: Get the release version from the tag
+        shell: bash
+        if: env.RG_VERSION == ''
+        run: |
+          echo "RG_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "version is: ${{ env.RG_VERSION }}"
+      - name: Create GitHub release
+        id: release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.RG_VERSION }}
+          release_name: ${{ env.RG_VERSION }}
   build:
     name: build
     runs-on: ${{ matrix.os }}
