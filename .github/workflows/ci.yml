@@ -6,6 +6,7 @@ jobs:
   build:
     name: build
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       matrix:
         include:
