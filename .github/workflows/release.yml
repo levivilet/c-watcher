@@ -8,7 +8,7 @@ on:
 jobs:
   create-release:
     name: create-release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       upload_url: ${{ steps.release.outputs.upload_url }}
       rg_version: ${{ env.RG_VERSION }}
@@ -34,19 +34,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             platform: linux
             arch: x64
             npm_config_arch: x64
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             platform: linux
             arch: arm64
             npm_config_arch: arm64
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             platform: linux
             arch: armhf
             npm_config_arch: arm
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             platform: alpine
             arch: x64
             npm_config_arch: x64
